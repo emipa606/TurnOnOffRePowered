@@ -1,0 +1,9 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<LanguageData>
+  <!--  Settings -->
+  <lowValue.label>Powerdraw when unused in Watts</lowValue.label>
+  <lowValue.tooltip>How many Watts should be consumed when the building is idle?</lowValue.tooltip>
+  <highMultiplier.label>Power multiplier when in use</highMultiplier.label>
+  <highMultiplier.tooltip>How much should the original powerdraw be multiplied with?</highMultiplier.tooltip>
+
+</LanguageData>
