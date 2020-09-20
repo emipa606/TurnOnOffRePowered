@@ -6,6 +6,7 @@ using UnityEngine;
 using HugsLib;
 using HarmonyLib;
 using HugsLib.Settings;
+using System.Linq;
 
 namespace TurnOnOffRePowered
 {
@@ -206,11 +207,21 @@ namespace TurnOnOffRePowered
             {
                 highPowerMultiplier = highMultiplier.Value;
             }
+
+            var repowerVanilla = new List<string[]>
+            {
+                new string[] {"ElectricCrematorium", "200", "750", "Normal" },
+                new string[] { "ElectricSmelter", "400", "4500", "Normal" },
+                new string[] { "HiTechResearchBench", "100", "1000", "Normal" },
+                new string[] { "HydroponicsBasin", "5", "75", "Special" },
+                new string[] { "SunLamp", "0", "2900", "Special" },
+                new string[] { "Autodoor", "5", "500", "Special" }
+            };
+
             var specialCases = new List<string>
             {
                 "MultiAnalyzer",
                 "VitalsMonitor",
-                "HiTechResearchBench",
                 "TubeTelevision",
                 "FlatscreenTelevision",
                 "MegascreenTelevision",
@@ -220,6 +231,18 @@ namespace TurnOnOffRePowered
             foreach (var def in DefDatabase<ThingDef>.AllDefsListForReading)
             {
                 CompProperties_Power powerProps;
+                if((from stringArray in repowerVanilla where stringArray[0] == def.defName select stringArray).Count() > 0)
+                {
+                    var repowerSetting = (from stringArray in repowerVanilla where stringArray[0] == def.defName select stringArray).First();
+                    if(repowerSetting[3] == "Normal")
+                    {
+                        RegisterWorkTable(def.defName, -Convert.ToInt32(repowerSetting[1]), -Convert.ToInt32(repowerSetting[2]));
+                    } else
+                    {
+                        RegisterSpecialPowerTrader(def.defName, -Convert.ToInt32(repowerSetting[1]), -Convert.ToInt32(repowerSetting[2]));
+                    }
+                    continue;
+                }
                 if (specialCases.Contains(def.defName))
                 {
                     powerProps = def.GetCompProperties<CompProperties_Power>();
