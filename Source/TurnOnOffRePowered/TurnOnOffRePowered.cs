@@ -214,7 +214,7 @@ namespace TurnOnOffRePowered
                 new string[] { "ElectricSmelter", "400", "4500", "Normal" },
                 new string[] { "HiTechResearchBench", "100", "1000", "Normal" },
                 new string[] { "HydroponicsBasin", "5", "75", "Special" },
-                new string[] { "SunLamp", "0", "2900", "Special" },
+                //new string[] { "SunLamp", "0", "2900", "Special" },
                 new string[] { "Autodoor", "5", "500", "Special" }
             };
 
