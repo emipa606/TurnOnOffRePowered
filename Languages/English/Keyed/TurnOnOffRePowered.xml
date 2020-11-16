@@ -5,5 +5,6 @@
   <lowValue.tooltip>How many Watts should be consumed when the building is idle?</lowValue.tooltip>
   <highMultiplier.label>Power multiplier when in use</highMultiplier.label>
   <highMultiplier.tooltip>How much should the original powerdraw be multiplied with?</highMultiplier.tooltip>
-
+  <applyRepowerVanilla.label>Apply built-in power-settings from the original RePower-mod</applyRepowerVanilla.label>
+  <applyRepowerVanilla.tooltip>The RePower-mod had default values for the Crematorium, Smelter and the High-Tech Research Bench, increasing the high and low value for these buildnings independent of the above settigns.</applyRepowerVanilla.tooltip>
 </LanguageData>

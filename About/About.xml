@@ -29,7 +29,9 @@
     <li>EbonJaeger.RePowerReborn</li>
     <li>ryder.turnitonoff</li>
   </incompatibleWith>
-  <description>[h1]Why not both?[/h1]
+  <description>[img]https://i.imgur.com/WAEzk68.png[/img]
+
+[h1]Why not both?[/h1]
 	
 This mod is based on two other mods:  [url=https://steamcommunity.com/sharedfiles/filedetails/?id=1530276152]Turn It On and Off[/url] and [url=https://steamcommunity.com/sharedfiles/filedetails/?id=1503118650]RePower[/url]
 
@@ -43,6 +45,7 @@ This trouble is that it keeps the vanilla power-requirement, making the game ver
 
 This mod combines the two and also introduces mod-options.
 This makes it possible to define a multiplier for the vanilla power-draw for a more realistic level.
+Changes are applied without need for restart.
 It also supports the patches from RePower for special cases or personal settings.
 
 Its safe to add and remove from saves, and should not affect performance any more than either of the previous mods.
@@ -50,11 +53,19 @@ Its safe to add and remove from saves, and should not affect performance any mor
 If you want, you can use this along with my patch-pack for RePower:
 https://steamcommunity.com/sharedfiles/filedetails/?id=1836577627
 
-Support-chat:
-https://invite.gg/mlie
+Credits:
+Ryder (Turn It On and Off 1.1/1.2)
+Thom Blair III (Turn It On and Off B19/1.0)
+Fluffy (Turn It On and Off B19/1.0)
+Xen (Turn It On and Off B19/1.0)
+EbonJaeger (RePower 1.1)
+NubsPixel (RePower B19)
+Texel (RePower A16)
 
-Non-steam version:
-https://github.com/emipa606/TurnOnOffRePowered
-
-	</description>
+[table]
+	[tr]
+		[td][url=https://invite.gg/Mlie][img]https://i.imgur.com/zdzzBrc.png[/img][/url][/td]
+		[td][url=https://github.com/emipa606/TurnOnOffRePowered][img]https://i.imgur.com/kTkpTOE.png[/img][/url][/td]
+	[/tr]
+[/table]</description>
 </ModMetaData>

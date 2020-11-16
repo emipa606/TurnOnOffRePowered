@@ -16,7 +16,7 @@ namespace TurnOnOffRePowered
     {
         [HarmonyPrefix]
         public static void UsedThisTick(Building_WorkTable __instance)
-        {         
+        {
             TurnItOnandOff.AddBuildingUsed(__instance);
         }
     }
@@ -35,13 +35,10 @@ namespace TurnOnOffRePowered
     {
         private SettingHandle<float> lowValue;
         private SettingHandle<float> highMultiplier;
-        public override string ModIdentifier
-        {
-            get
-            {
-                return "TurnOnOffRePowered";
-            }
-        }
+        private SettingHandle<bool> applyRepowerVanilla;
+
+
+        public override string ModIdentifier => "TurnOnOffRePowered";
 
         int lastVisibleBuildings = 0;
 
@@ -96,7 +93,10 @@ namespace TurnOnOffRePowered
 
             foreach (Building building in buildingsThatWereUsedLastTick)
             {
-                if (!buildingsToModifyPowerOn.Contains(building)) continue;
+                if (!buildingsToModifyPowerOn.Contains(building))
+                {
+                    continue;
+                }
 
                 var powerComp = building.TryGetComp<CompPowerTrader>();
                 if (powerComp != null)
@@ -109,7 +109,11 @@ namespace TurnOnOffRePowered
         public static TurnItOnandOff instance;
         public static void Log(string log)
         {
-            if (instance == null) return;
+            if (instance == null)
+            {
+                return;
+            }
+
             instance.Logger.Message(log);
         }
 
@@ -123,7 +127,7 @@ namespace TurnOnOffRePowered
         {
             lowValue = Settings.GetHandle<float>("lowValue", "lowValue.label".Translate(), "lowValue.tooltip".Translate(), 10f, Validators.FloatRangeValidator(1f, 100f));
             highMultiplier = Settings.GetHandle<float>("highMultiplier", "highMultiplier.label".Translate(), "highMultiplier.tooltip".Translate(), 2.5f, Validators.FloatRangeValidator(0.1f, 10f));
-
+            applyRepowerVanilla = Settings.GetHandle<bool>("applyRepowerVanilla", "applyRepowerVanilla.label".Translate(), "applyRepowerVanilla.tooltip".Translate(), true);
             UpdateDefinitions();
         }
 
@@ -184,16 +188,24 @@ namespace TurnOnOffRePowered
                     continue;
                 }
                 if (def.poweredWorkbench)
+                {
                     RegisterWorkTable(namedDef.defName, def.lowPower, def.highPower);
+                }
+
                 if (def.poweredReservable)
+                {
                     RegisterExternalReservable(namedDef.defName, def.lowPower, def.highPower);
+                }
             }
         }
 
         private void UpdateDefinitions()
         {
             if (Prefs.DevMode)
+            {
                 Verse.Log.Message($"Clearing power-levels");
+            }
+
             powerLevels = new Dictionary<string, Vector2>();
             UpdateRepowerDefs();
             UpdateTurnItOnandOffDefs();
@@ -217,7 +229,6 @@ namespace TurnOnOffRePowered
                 //new string[] { "SunLamp", "0", "2900", "Special" },
                 new string[] { "Autodoor", "5", "500", "Special" }
             };
-
             var specialCases = new List<string>
             {
                 "MultiAnalyzer",
@@ -227,17 +238,28 @@ namespace TurnOnOffRePowered
                 "MegascreenTelevision",
                 "DeepDrill"
             };
+            if (!applyRepowerVanilla)
+            {
+                repowerVanilla = new List<string[]>
+                {
+                    //new string[] { "SunLamp", "0", "2900", "Special" },
+                    new string[] { "Autodoor", "5", "500", "Special" }
+                };
+                specialCases.Add("HiTechResearchBench");
+            }
+
 
             foreach (var def in DefDatabase<ThingDef>.AllDefsListForReading)
             {
                 CompProperties_Power powerProps;
-                if((from stringArray in repowerVanilla where stringArray[0] == def.defName select stringArray).Count() > 0)
+                if ((from stringArray in repowerVanilla where stringArray[0] == def.defName select stringArray).Count() > 0)
                 {
                     var repowerSetting = (from stringArray in repowerVanilla where stringArray[0] == def.defName select stringArray).First();
-                    if(repowerSetting[3] == "Normal")
+                    if (repowerSetting[3] == "Normal")
                     {
                         RegisterWorkTable(def.defName, -Convert.ToInt32(repowerSetting[1]), -Convert.ToInt32(repowerSetting[2]));
-                    } else
+                    }
+                    else
                     {
                         RegisterSpecialPowerTrader(def.defName, -Convert.ToInt32(repowerSetting[1]), -Convert.ToInt32(repowerSetting[2]));
                     }
@@ -280,7 +302,10 @@ namespace TurnOnOffRePowered
         static void RegisterWorkTable(string defName, float idlePower, float activePower)
         {
             if (Prefs.DevMode)
+            {
                 Verse.Log.Message($"adding {defName}, low: {idlePower}, high: {activePower}");
+            }
+
             powerLevels.Add(defName, new Vector2(idlePower, activePower));
         }
 
@@ -289,7 +314,10 @@ namespace TurnOnOffRePowered
             if (!powerLevels.ContainsKey(defName))
             {
                 if (Prefs.DevMode)
+                {
                     Verse.Log.Message($"adding {defName}, low: {idlePower}, high: {activePower}");
+                }
+
                 powerLevels.Add(defName, new Vector2(idlePower, activePower));
             }
         }
@@ -320,7 +348,7 @@ namespace TurnOnOffRePowered
 
             if (powerLevels.ContainsKey(defName))
             {
-                bool inUse = buildingsThatWereUsedLastTick.Contains(building);
+                var inUse = buildingsThatWereUsedLastTick.Contains(building);
                 instance.Logger.Message(string.Format("{0} ({1}) power adjusted", building.ThingID, defName));
                 return powerLevels[defName][inUse ? 1 : 0];
             }
@@ -390,11 +418,19 @@ namespace TurnOnOffRePowered
             {
                 foreach (var map in Find.Maps)
                 {
-                    if (map == null) continue;
+                    if (map == null)
+                    {
+                        continue;
+                    }
+
                     var buildings = map.listerBuildings.AllBuildingsColonistOfDef(def);
                     foreach (var building in buildings)
                     {
-                        if (building == null) continue;
+                        if (building == null)
+                        {
+                            continue;
+                        }
+
                         reservableBuildings.Add(building);
                     }
                 }
@@ -406,7 +442,10 @@ namespace TurnOnOffRePowered
             foreach (var building in reservableBuildings)
             {
                 // Cache misses
-                if (building?.Map == null) continue;
+                if (building?.Map == null)
+                {
+                    continue;
+                }
 
                 if (building.Map.reservationManager.IsReservedByAnyoneOf(building, building.Faction))
                 {
@@ -420,15 +459,22 @@ namespace TurnOnOffRePowered
         {
             foreach (var mediBed in MedicalBeds)
             {
-                if (mediBed?.Map == null) continue;
+                if (mediBed?.Map == null)
+                {
+                    continue;
+                }
 
-                bool occupied = false;
+                var occupied = false;
                 foreach (var occupant in mediBed.CurOccupants)
                 {
                     occupied = true;
                 }
 
-                if (!occupied) continue;
+                if (!occupied)
+                {
+                    continue;
+                }
+
                 var facilityAffector = mediBed.GetComp<CompAffectedByFacilities>();
                 foreach (var facility in facilityAffector.LinkedFacilitiesListForReading)
                 {
@@ -441,11 +487,17 @@ namespace TurnOnOffRePowered
         {
             foreach (var deepDrill in DeepDrills)
             {
-                if (deepDrill?.Map == null) continue;
+                if (deepDrill?.Map == null)
+                {
+                    continue;
+                }
 
                 var inUse = deepDrill.Map.reservationManager.IsReservedByAnyoneOf(deepDrill, deepDrill.Faction);
 
-                if (!inUse) continue;
+                if (!inUse)
+                {
+                    continue;
+                }
 
                 buildingsInUseThisTick.Add(deepDrill);
             }
@@ -457,12 +509,18 @@ namespace TurnOnOffRePowered
         {
             foreach (var researchTable in HiTechResearchBenches)
             {
-                if (researchTable?.Map == null) continue;
+                if (researchTable?.Map == null)
+                {
+                    continue;
+                }
 
                 // Determine if we are reserved:
                 var inUse = researchTable.Map.reservationManager.IsReservedByAnyoneOf(researchTable, researchTable.Faction);
 
-                if (!inUse) continue;
+                if (!inUse)
+                {
+                    continue;
+                }
 
                 buildingsInUseThisTick.Add(researchTable);
                 var facilityAffector = researchTable.GetComp<CompAffectedByFacilities>();
@@ -477,11 +535,21 @@ namespace TurnOnOffRePowered
         {
             foreach (var building in ScheduledBuildings)
             {
-                if (building == null) continue;
-                if (building.Map == null) continue;
+                if (building == null)
+                {
+                    continue;
+                }
+
+                if (building.Map == null)
+                {
+                    continue;
+                }
 
                 var comp = building.GetComp<CompSchedule>();
-                if (comp == null) continue; // Doesn't actually have a schedule
+                if (comp == null)
+                {
+                    continue; // Doesn't actually have a schedule
+                }
 
                 if (comp.Allowed)
                 {
@@ -494,12 +562,22 @@ namespace TurnOnOffRePowered
         {
             foreach (var autodoor in Autodoors)
             {
-                if (autodoor == null) continue;
-                if (autodoor.Map == null) continue;
+                if (autodoor == null)
+                {
+                    continue;
+                }
+
+                if (autodoor.Map == null)
+                {
+                    continue;
+                }
 
                 // If the door allows passage and isn't blocked by an object
                 var inUse = autodoor.Open && (!autodoor.BlockedOpenMomentary);
-                if (inUse) buildingsInUseThisTick.Add(autodoor);
+                if (inUse)
+                {
+                    buildingsInUseThisTick.Add(autodoor);
+                }
             }
         }
 
@@ -507,8 +585,15 @@ namespace TurnOnOffRePowered
         {
             foreach (var basin in HydroponcsBasins)
             {
-                if (basin == null) continue;
-                if (basin.Map == null) continue;
+                if (basin == null)
+                {
+                    continue;
+                }
+
+                if (basin.Map == null)
+                {
+                    continue;
+                }
 
                 foreach (var tile in basin.OccupiedRect())
                 {
