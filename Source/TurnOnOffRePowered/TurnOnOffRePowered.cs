@@ -233,11 +233,12 @@ namespace TurnOnOffRePowered
             {
                 "MultiAnalyzer",
                 "VitalsMonitor",
-                "TubeTelevision",
-                "FlatscreenTelevision",
-                "MegascreenTelevision",
                 "DeepDrill"
             };
+            foreach (var tv in from tvDef in DefDatabase<ThingDef>.AllDefsListForReading where tvDef.building?.joyKind == DefDatabase<JoyKindDef>.GetNamed("Television") select tvDef)
+            {
+                specialCases.Add(tv.defName);
+            }
             if (!applyRepowerVanilla)
             {
                 repowerVanilla = new List<string[]>
