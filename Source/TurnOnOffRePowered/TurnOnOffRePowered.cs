@@ -1,12 +1,13 @@
 ﻿using System;
-using RimWorld;
-using Verse;
 using System.Collections.Generic;
-using UnityEngine;
-using HugsLib;
-using HarmonyLib;
-using HugsLib.Settings;
 using System.Linq;
+using HarmonyLib;
+using HugsLib;
+using HugsLib.Settings;
+using RePower;
+using RimWorld;
+using UnityEngine;
+using Verse;
 
 namespace TurnOnOffRePowered
 {
@@ -37,34 +38,44 @@ namespace TurnOnOffRePowered
         [HarmonyPostfix]
         public static void AddRequiredText(ThingWithComps __instance, ref string __result)
         {
-            if(!TurnItOnandOff.buildingsToModifyPowerOn.Contains(__instance))
+            if (!TurnItOnandOff.buildingsToModifyPowerOn.Contains(__instance))
             {
                 return;
             }
-            var lowString = $"{"PowerNeeded".Translate()}: {TurnItOnandOff.powerLevels[__instance.def.defName][0] * -1} W";
-            var lowReplacement = $"{"PowerNeeded".Translate()}: {TurnItOnandOff.powerLevels[__instance.def.defName][0] * -1} W ({TurnItOnandOff.powerLevels[__instance.def.defName][1] * -1} W {"powerNeededActive".Translate()})";
-            var highString = $"{"PowerNeeded".Translate()}: {TurnItOnandOff.powerLevels[__instance.def.defName][1] * -1} W";
-            var highReplacement = $"{"PowerNeeded".Translate()}: {TurnItOnandOff.powerLevels[__instance.def.defName][1] * -1} W ({TurnItOnandOff.powerLevels[__instance.def.defName][0] * -1} W {"powerNeededInactive".Translate()})";
-            if(__result.Contains(lowReplacement) || __result.Contains(highReplacement))
+
+            var lowString =
+                $"{"PowerNeeded".Translate()}: {TurnItOnandOff.powerLevels[__instance.def.defName][0] * -1} W";
+            var lowReplacement =
+                $"{"PowerNeeded".Translate()}: {TurnItOnandOff.powerLevels[__instance.def.defName][0] * -1} W ({TurnItOnandOff.powerLevels[__instance.def.defName][1] * -1} W {"powerNeededActive".Translate()})";
+            var highString =
+                $"{"PowerNeeded".Translate()}: {TurnItOnandOff.powerLevels[__instance.def.defName][1] * -1} W";
+            var highReplacement =
+                $"{"PowerNeeded".Translate()}: {TurnItOnandOff.powerLevels[__instance.def.defName][1] * -1} W ({TurnItOnandOff.powerLevels[__instance.def.defName][0] * -1} W {"powerNeededInactive".Translate()})";
+            if (__result.Contains(lowReplacement) || __result.Contains(highReplacement))
             {
                 return;
             }
+
             __result = __result.Replace(lowString, lowReplacement).Replace(highString, highReplacement);
         }
     }
 
     public class TurnItOnandOff : ModBase
     {
-        private SettingHandle<float> lowValue;
-        private SettingHandle<float> highMultiplier;
+        private static TurnItOnandOff instance;
+
+        // Power levels pairs as Vector2's, X = Idling, Y = In Use
+        public static Dictionary<string, Vector2> powerLevels = new Dictionary<string, Vector2>();
         private SettingHandle<bool> applyRepowerVanilla;
+        private SettingHandle<float> highMultiplier;
+
+        private int lastVisibleBuildings;
+        private SettingHandle<float> lowValue;
+
+        private int ticksToRescan;
 
 
         public override string ModIdentifier => "TurnOnOffRePowered";
-
-        int lastVisibleBuildings = 0;
-
-        int ticksToRescan = 0;
 
         public override void Tick(int currentTick)
         {
@@ -84,7 +95,7 @@ namespace TurnOnOffRePowered
             EvalHydroponicsBasins();
             EvalScheduledBuildings();
 
-            foreach (Thing thing in buildingsToModifyPowerOn)
+            foreach (var thing in buildingsToModifyPowerOn)
             {
                 if (thing == null)
                 {
@@ -113,7 +124,7 @@ namespace TurnOnOffRePowered
                 ScanForThings();
             }
 
-            foreach (Building building in buildingsThatWereUsedLastTick)
+            foreach (var building in buildingsThatWereUsedLastTick)
             {
                 if (!buildingsToModifyPowerOn.Contains(building))
                 {
@@ -128,15 +139,9 @@ namespace TurnOnOffRePowered
             }
         }
 
-        public static TurnItOnandOff instance;
         public static void Log(string log)
         {
-            if (instance == null)
-            {
-                return;
-            }
-
-            instance.Logger.Message(log);
+            instance?.Logger.Message(log);
         }
 
         public override void SettingsChanged()
@@ -147,9 +152,12 @@ namespace TurnOnOffRePowered
 
         public override void DefsLoaded()
         {
-            lowValue = Settings.GetHandle<float>("lowValue", "lowValue.label".Translate(), "lowValue.tooltip".Translate(), 10f, Validators.FloatRangeValidator(1f, 100f));
-            highMultiplier = Settings.GetHandle<float>("highMultiplier", "highMultiplier.label".Translate(), "highMultiplier.tooltip".Translate(), 2.5f, Validators.FloatRangeValidator(0.1f, 10f));
-            applyRepowerVanilla = Settings.GetHandle<bool>("applyRepowerVanilla", "applyRepowerVanilla.label".Translate(), "applyRepowerVanilla.tooltip".Translate(), true);
+            lowValue = Settings.GetHandle("lowValue", "lowValue.label".Translate(), "lowValue.tooltip".Translate(), 10f,
+                Validators.FloatRangeValidator(1f, 100f));
+            highMultiplier = Settings.GetHandle("highMultiplier", "highMultiplier.label".Translate(),
+                "highMultiplier.tooltip".Translate(), 2.5f, Validators.FloatRangeValidator(0.1f, 10f));
+            applyRepowerVanilla = Settings.GetHandle("applyRepowerVanilla", "applyRepowerVanilla.label".Translate(),
+                "applyRepowerVanilla.tooltip".Translate(), true);
             UpdateDefinitions();
         }
 
@@ -162,7 +170,7 @@ namespace TurnOnOffRePowered
 
         private void UpdateRepowerDefs()
         {
-            var defs = DefDatabase<RePower.RePowerDef>.AllDefs;
+            var defs = DefDatabase<RePowerDef>.AllDefs;
 
             foreach (var def in defs)
             {
@@ -209,6 +217,7 @@ namespace TurnOnOffRePowered
                 {
                     continue;
                 }
+
                 if (def.poweredWorkbench)
                 {
                     RegisterWorkTable(namedDef.defName, def.lowPower, def.highPower);
@@ -225,7 +234,7 @@ namespace TurnOnOffRePowered
         {
             if (Prefs.DevMode)
             {
-                Verse.Log.Message($"Clearing power-levels");
+                Verse.Log.Message("Clearing power-levels");
             }
 
             powerLevels = new Dictionary<string, Vector2>();
@@ -236,6 +245,7 @@ namespace TurnOnOffRePowered
             {
                 lowPower = lowValue.Value * -1;
             }
+
             var highPowerMultiplier = 2.5f;
             if (highMultiplier != null)
             {
@@ -244,12 +254,12 @@ namespace TurnOnOffRePowered
 
             var repowerVanilla = new List<string[]>
             {
-                new string[] {"ElectricCrematorium", "200", "750", "Normal" },
-                new string[] { "ElectricSmelter", "400", "4500", "Normal" },
-                new string[] { "HiTechResearchBench", "100", "1000", "Normal" },
-                new string[] { "HydroponicsBasin", "5", "75", "Special" },
+                new[] {"ElectricCrematorium", "200", "750", "Normal"},
+                new[] {"ElectricSmelter", "400", "4500", "Normal"},
+                new[] {"HiTechResearchBench", "100", "1000", "Normal"},
+                new[] {"HydroponicsBasin", "5", "75", "Special"},
                 //new string[] { "SunLamp", "0", "2900", "Special" },
-                new string[] { "Autodoor", "5", "500", "Special" }
+                new[] {"Autodoor", "5", "500", "Special"}
             };
             var specialCases = new List<string>
             {
@@ -257,16 +267,19 @@ namespace TurnOnOffRePowered
                 "VitalsMonitor",
                 "DeepDrill"
             };
-            foreach (var tv in from tvDef in DefDatabase<ThingDef>.AllDefsListForReading where tvDef.building?.joyKind == DefDatabase<JoyKindDef>.GetNamed("Television") select tvDef)
+            foreach (var tv in from tvDef in DefDatabase<ThingDef>.AllDefsListForReading
+                where tvDef.building?.joyKind == DefDatabase<JoyKindDef>.GetNamed("Television")
+                select tvDef)
             {
                 specialCases.Add(tv.defName);
             }
+
             if (!applyRepowerVanilla)
             {
                 repowerVanilla = new List<string[]>
                 {
                     //new string[] { "SunLamp", "0", "2900", "Special" },
-                    new string[] { "Autodoor", "5", "500", "Special" }
+                    new[] {"Autodoor", "5", "500", "Special"}
                 };
                 specialCases.Add("HiTechResearchBench");
             }
@@ -275,38 +288,49 @@ namespace TurnOnOffRePowered
             foreach (var def in DefDatabase<ThingDef>.AllDefsListForReading)
             {
                 CompProperties_Power powerProps;
-                if ((from stringArray in repowerVanilla where stringArray[0] == def.defName select stringArray).Count() > 0)
+                if ((from stringArray in repowerVanilla where stringArray[0] == def.defName select stringArray).Any())
                 {
-                    var repowerSetting = (from stringArray in repowerVanilla where stringArray[0] == def.defName select stringArray).First();
+                    var repowerSetting = (from stringArray in repowerVanilla
+                        where stringArray[0] == def.defName
+                        select stringArray).First();
                     if (repowerSetting[3] == "Normal")
                     {
-                        RegisterWorkTable(def.defName, -Convert.ToInt32(repowerSetting[1]), -Convert.ToInt32(repowerSetting[2]));
+                        RegisterWorkTable(def.defName, -Convert.ToInt32(repowerSetting[1]),
+                            -Convert.ToInt32(repowerSetting[2]));
                     }
                     else
                     {
-                        RegisterSpecialPowerTrader(def.defName, -Convert.ToInt32(repowerSetting[1]), -Convert.ToInt32(repowerSetting[2]));
+                        RegisterSpecialPowerTrader(def.defName, -Convert.ToInt32(repowerSetting[1]),
+                            -Convert.ToInt32(repowerSetting[2]));
                     }
+
                     continue;
                 }
+
                 if (specialCases.Contains(def.defName))
                 {
                     powerProps = def.GetCompProperties<CompProperties_Power>();
-                    RegisterSpecialPowerTrader(def.defName, lowPower, powerProps.basePowerConsumption * highPowerMultiplier * -1);
+                    RegisterSpecialPowerTrader(def.defName, lowPower,
+                        powerProps.basePowerConsumption * highPowerMultiplier * -1);
                     continue;
                 }
+
                 if (powerLevels.ContainsKey(def.defName))
                 {
                     continue;
                 }
+
                 if (!typeof(Building_WorkTable).IsAssignableFrom(def.thingClass))
                 {
                     continue;
                 }
+
                 powerProps = def.GetCompProperties<CompProperties_Power>();
                 if (powerProps == null || !typeof(CompPowerTrader).IsAssignableFrom(powerProps.compClass))
                 {
                     continue;
                 }
+
                 RegisterWorkTable(def.defName, lowPower, powerProps.basePowerConsumption * highPowerMultiplier * -1);
             }
 
@@ -319,10 +343,7 @@ namespace TurnOnOffRePowered
             HydroponicsBasinDef = ThingDef.Named("HydroponicsBasin");
         }
 
-        // Power levels pairs as Vector2's, X = Idling, Y = In Use
-        public static Dictionary<string, Vector2> powerLevels = new Dictionary<string, Vector2>();
-
-        static void RegisterWorkTable(string defName, float idlePower, float activePower)
+        private static void RegisterWorkTable(string defName, float idlePower, float activePower)
         {
             if (Prefs.DevMode)
             {
@@ -332,24 +353,26 @@ namespace TurnOnOffRePowered
             powerLevels.Add(defName, new Vector2(idlePower, activePower));
         }
 
-        static void RegisterSpecialPowerTrader(string defName, float idlePower, float activePower)
+        private static void RegisterSpecialPowerTrader(string defName, float idlePower, float activePower)
         {
-            if (!powerLevels.ContainsKey(defName))
+            if (powerLevels.ContainsKey(defName))
             {
-                if (Prefs.DevMode)
-                {
-                    Verse.Log.Message($"adding {defName}, low: {idlePower}, high: {activePower}");
-                }
-
-                powerLevels.Add(defName, new Vector2(idlePower, activePower));
+                return;
             }
+
+            if (Prefs.DevMode)
+            {
+                Verse.Log.Message($"adding {defName}, low: {idlePower}, high: {activePower}");
+            }
+
+            powerLevels.Add(defName, new Vector2(idlePower, activePower));
         }
 
-        void RegisterScheduledBuilding(string defName, int lowPower, int highPower)
+        private void RegisterScheduledBuilding(string defName, int lowPower, int highPower)
         {
             if (defName == null)
             {
-                Logger.Warning($"Def Named {defName} could not be found");
+                Logger.Warning("Defname is null");
                 return;
             }
 
@@ -365,38 +388,39 @@ namespace TurnOnOffRePowered
             }
         }
 
-        static public float PowerFactor(CompPowerTrader trader, Building building)
+        public static float PowerFactor(Building building)
         {
             var defName = building.def.defName;
 
-            if (powerLevels.ContainsKey(defName))
+            if (!powerLevels.ContainsKey(defName))
             {
-                var inUse = buildingsThatWereUsedLastTick.Contains(building);
-                instance.Logger.Message(string.Format("{0} ({1}) power adjusted", building.ThingID, defName));
-                return powerLevels[defName][inUse ? 1 : 0];
+                return 1;
             }
 
-            return 1;
+            var inUse = buildingsThatWereUsedLastTick.Contains(building);
+            instance.Logger.Message($"{building.ThingID} ({defName}) power adjusted");
+            return powerLevels[defName][inUse ? 1 : 0];
         }
 
         #region tracking
-        public static int inUseTick = 0;
-        public static HashSet<Building> buildingsThatWereUsedLastTick = new HashSet<Building>();
-        public static HashSet<Building> buildingsInUseThisTick = new HashSet<Building>();
-        public static HashSet<Building> buildingsToModifyPowerOn = new HashSet<Building>();
 
-        public static HashSet<ThingDef> buildingDefsReservable = new HashSet<ThingDef>();
-        public static HashSet<Building> reservableBuildings = new HashSet<Building>();
+        private static int inUseTick;
+        private static readonly HashSet<Building> buildingsThatWereUsedLastTick = new HashSet<Building>();
+        private static readonly HashSet<Building> buildingsInUseThisTick = new HashSet<Building>();
+        public static readonly HashSet<Building> buildingsToModifyPowerOn = new HashSet<Building>();
 
-        public HashSet<ThingDef> ScheduledBuildingsDefs = new HashSet<ThingDef>();
-        public HashSet<Building> ScheduledBuildings = new HashSet<Building>();
+        private static readonly HashSet<ThingDef> buildingDefsReservable = new HashSet<ThingDef>();
+        private static readonly HashSet<Building> reservableBuildings = new HashSet<Building>();
 
-        public static HashSet<Building_Bed> MedicalBeds = new HashSet<Building_Bed>();
-        public static HashSet<Building> HiTechResearchBenches = new HashSet<Building>();
+        private readonly HashSet<ThingDef> ScheduledBuildingsDefs = new HashSet<ThingDef>();
+        private readonly HashSet<Building> scheduledBuildings = new HashSet<Building>();
 
-        public static HashSet<Building_Door> Autodoors = new HashSet<Building_Door>();
-        public static HashSet<Building> DeepDrills = new HashSet<Building>();
-        public static HashSet<Building> HydroponcsBasins = new HashSet<Building>();
+        private static readonly HashSet<Building_Bed> MedicalBeds = new HashSet<Building_Bed>();
+        private static readonly HashSet<Building> HiTechResearchBenches = new HashSet<Building>();
+
+        private static readonly HashSet<Building_Door> Autodoors = new HashSet<Building_Door>();
+        private static readonly HashSet<Building> DeepDrills = new HashSet<Building>();
+        private static readonly HashSet<Building> HydroponcsBasins = new HashSet<Building>();
 
         private static ThingDef medicalBedDef;
         private static ThingDef HiTechResearchBenchDef;
@@ -409,7 +433,7 @@ namespace TurnOnOffRePowered
             buildingsInUseThisTick.Add(building);
         }
 
-        public static void RegisterExternalReservable(string defName, int lowPower, int highPower)
+        private static void RegisterExternalReservable(string defName, int lowPower, int highPower)
         {
             try
             {
@@ -417,27 +441,26 @@ namespace TurnOnOffRePowered
 
                 if (defName == null)
                 {
-                    instance.Logger.Message($"Def Named {defName} could not be found, it's respective mod probably isn't loaded");
+                    instance.Logger.Message(
+                        "Defname could not be found, it's respective mod probably isn't loaded");
                     return;
                 }
-                else
-                {
-                    instance.Logger.Message($"Attempting to register def named {defName}");
-                }
+
+                instance.Logger.Message($"Attempting to register def named {defName}");
 
                 RegisterWorkTable(defName, lowPower, highPower);
                 buildingDefsReservable.Add(def);
             }
-            catch (System.Exception e)
+            catch (Exception e)
             {
                 instance.Logger.Message(e.Message);
             }
         }
 
-        public static void ScanExternalReservable()
+        private static void ScanExternalReservable()
         {
             reservableBuildings.Clear();
-            foreach (ThingDef def in buildingDefsReservable)
+            foreach (var def in buildingDefsReservable)
             {
                 foreach (var map in Find.Maps)
                 {
@@ -478,7 +501,7 @@ namespace TurnOnOffRePowered
         }
 
         // Evaluate medical beds for medical beds in use, to register that the vitals monitors should be in high power mode
-        public static void EvalBeds()
+        private static void EvalBeds()
         {
             foreach (var mediBed in MedicalBeds)
             {
@@ -488,7 +511,7 @@ namespace TurnOnOffRePowered
                 }
 
                 var occupied = false;
-                foreach (var occupant in mediBed.CurOccupants)
+                foreach (var unused in mediBed.CurOccupants)
                 {
                     occupied = true;
                 }
@@ -506,7 +529,7 @@ namespace TurnOnOffRePowered
             }
         }
 
-        public static void EvalDeepDrills()
+        private static void EvalDeepDrills()
         {
             foreach (var deepDrill in DeepDrills)
             {
@@ -528,7 +551,7 @@ namespace TurnOnOffRePowered
 
         // How to tell if a research table is in use?
         // I can't figure it out. Instead let's base it on being reserved for use
-        public static void EvalResearchTables()
+        private static void EvalResearchTables()
         {
             foreach (var researchTable in HiTechResearchBenches)
             {
@@ -538,7 +561,8 @@ namespace TurnOnOffRePowered
                 }
 
                 // Determine if we are reserved:
-                var inUse = researchTable.Map.reservationManager.IsReservedByAnyoneOf(researchTable, researchTable.Faction);
+                var inUse = researchTable.Map.reservationManager.IsReservedByAnyoneOf(researchTable,
+                    researchTable.Faction);
 
                 if (!inUse)
                 {
@@ -554,16 +578,11 @@ namespace TurnOnOffRePowered
             }
         }
 
-        public void EvalScheduledBuildings()
+        private void EvalScheduledBuildings()
         {
-            foreach (var building in ScheduledBuildings)
+            foreach (var building in scheduledBuildings)
             {
-                if (building == null)
-                {
-                    continue;
-                }
-
-                if (building.Map == null)
+                if (building?.Map == null)
                 {
                     continue;
                 }
@@ -581,22 +600,17 @@ namespace TurnOnOffRePowered
             }
         }
 
-        public static void EvalAutodoors()
+        private static void EvalAutodoors()
         {
             foreach (var autodoor in Autodoors)
             {
-                if (autodoor == null)
-                {
-                    continue;
-                }
-
-                if (autodoor.Map == null)
+                if (autodoor?.Map == null)
                 {
                     continue;
                 }
 
                 // If the door allows passage and isn't blocked by an object
-                var inUse = autodoor.Open && (!autodoor.BlockedOpenMomentary);
+                var inUse = autodoor.Open && !autodoor.BlockedOpenMomentary;
                 if (inUse)
                 {
                     buildingsInUseThisTick.Add(autodoor);
@@ -604,16 +618,16 @@ namespace TurnOnOffRePowered
             }
         }
 
-        public void EvalHydroponicsBasins()
+        private void EvalHydroponicsBasins()
         {
+            if (ModLister.GetActiveModWithIdentifier("Aidan.SelfLitHydroponics") != null)
+            {
+                return;
+            }
+
             foreach (var basin in HydroponcsBasins)
             {
-                if (basin == null)
-                {
-                    continue;
-                }
-
-                if (basin.Map == null)
+                if (basin?.Map == null)
                 {
                     continue;
                 }
@@ -623,18 +637,21 @@ namespace TurnOnOffRePowered
                     var thingsOnTile = basin.Map.thingGrid.ThingsListAt(tile);
                     foreach (var thing in thingsOnTile)
                     {
-                        if (thing is Plant)
+                        if (!(thing is Plant))
                         {
-                            buildingsInUseThisTick.Add(basin);
-                            break;
+                            continue;
                         }
+
+                        buildingsInUseThisTick.Add(basin);
+                        break;
                     }
                 }
             }
         }
 
-        public static HashSet<ThingDef> thingDefsToLookFor;
-        public static void ScanForThings()
+        private static HashSet<ThingDef> thingDefsToLookFor;
+
+        private static void ScanForThings()
         {
             // Build the set of def names to look for if we don't have it
             if (thingDefsToLookFor == null)
@@ -657,9 +674,9 @@ namespace TurnOnOffRePowered
             HydroponcsBasins.Clear();
 
             var maps = Find.Maps;
-            foreach (Map map in maps)
+            foreach (var map in maps)
             {
-                foreach (ThingDef def in thingDefsToLookFor)
+                foreach (var def in thingDefsToLookFor)
                 {
                     var matchingThings = map.listerBuildings.AllBuildingsColonistOfDef(def);
                     // Merge in all matching things
@@ -674,7 +691,7 @@ namespace TurnOnOffRePowered
                     MedicalBeds.Add(medicalBed);
                 }
 
-                // Register Hightech research tables too
+                // Register High tech research tables too
                 var researchTables = map.listerBuildings.AllBuildingsColonistOfDef(HiTechResearchBenchDef);
                 HiTechResearchBenches.UnionWith(researchTables);
 

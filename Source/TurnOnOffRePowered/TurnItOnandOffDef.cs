@@ -2,11 +2,12 @@
 
 namespace TurnOnOffRePowered
 {
-    public class TurnItOnandOffDef : Def {
-        public string targetDef;
-        public int lowPower;
+    public class TurnItOnandOffDef : Def
+    {
         public int highPower;
-        public bool poweredWorkbench;
+        public int lowPower;
         public bool poweredReservable;
+        public bool poweredWorkbench;
+        public string targetDef;
     }
 }
