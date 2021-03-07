@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using HarmonyLib;
 using HugsLib;
 using HugsLib.Settings;
 using RePower;
@@ -11,55 +10,6 @@ using Verse;
 
 namespace TurnOnOffRePowered
 {
-    // Track the power users
-    [HarmonyPatch(typeof(Building_WorkTable), "UsedThisTick", new Type[] { })]
-    public static class Building_WorkTable_UsedThisTick_Patch
-    {
-        [HarmonyPrefix]
-        public static void UsedThisTick(Building_WorkTable __instance)
-        {
-            TurnItOnandOff.AddBuildingUsed(__instance);
-        }
-    }
-
-    [HarmonyPatch(typeof(JobDriver_WatchBuilding), "WatchTickAction", new Type[] { })]
-    public static class JobDriver_WatchBuilding_WatchTickAction_Patch
-    {
-        [HarmonyPrefix]
-        public static void WatchTickAction(JobDriver_WatchBuilding __instance)
-        {
-            TurnItOnandOff.AddBuildingUsed(__instance.job.targetA.Thing as Building);
-        }
-    }
-
-    [HarmonyPatch(typeof(ThingWithComps), "GetInspectString", new Type[] { })]
-    public static class ThingWithComps_GetInspectString_Patch
-    {
-        [HarmonyPostfix]
-        public static void AddRequiredText(ThingWithComps __instance, ref string __result)
-        {
-            if (!TurnItOnandOff.buildingsToModifyPowerOn.Contains(__instance))
-            {
-                return;
-            }
-
-            var lowString =
-                $"{"PowerNeeded".Translate()}: {TurnItOnandOff.powerLevels[__instance.def.defName][0] * -1} W";
-            var lowReplacement =
-                $"{"PowerNeeded".Translate()}: {TurnItOnandOff.powerLevels[__instance.def.defName][0] * -1} W ({TurnItOnandOff.powerLevels[__instance.def.defName][1] * -1} W {"powerNeededActive".Translate()})";
-            var highString =
-                $"{"PowerNeeded".Translate()}: {TurnItOnandOff.powerLevels[__instance.def.defName][1] * -1} W";
-            var highReplacement =
-                $"{"PowerNeeded".Translate()}: {TurnItOnandOff.powerLevels[__instance.def.defName][1] * -1} W ({TurnItOnandOff.powerLevels[__instance.def.defName][0] * -1} W {"powerNeededInactive".Translate()})";
-            if (__result.Contains(lowReplacement) || __result.Contains(highReplacement))
-            {
-                return;
-            }
-
-            __result = __result.Replace(lowString, lowReplacement).Replace(highString, highReplacement);
-        }
-    }
-
     public class TurnItOnandOff : ModBase
     {
         private static TurnItOnandOff instance;
@@ -79,6 +29,12 @@ namespace TurnOnOffRePowered
 
         public override void Tick(int currentTick)
         {
+            if (inUseTick == 0)
+            {
+                inUseTick = currentTick;
+                return;
+            }
+
             if (inUseTick != currentTick)
             {
                 inUseTick = currentTick;
@@ -88,11 +44,26 @@ namespace TurnOnOffRePowered
                 buildingsInUseThisTick.Clear();
             }
 
+            var visibleBuildings = Find.AnyPlayerHomeMap.listerBuildings.allBuildingsColonist.Count;
+            if (visibleBuildings != lastVisibleBuildings)
+            {
+                lastVisibleBuildings = visibleBuildings;
+                ticksToRescan = 0;
+            }
+
+            --ticksToRescan;
+            if (ticksToRescan < 0)
+            {
+                ticksToRescan = 2000;
+                ScanForThings();
+            }
+
             EvalBeds();
             EvalResearchTables();
             EvalAutodoors();
             EvalDeepDrills();
             EvalHydroponicsBasins();
+            EvalTurrets();
             EvalScheduledBuildings();
 
             foreach (var thing in buildingsToModifyPowerOn)
@@ -108,20 +79,6 @@ namespace TurnOnOffRePowered
                 {
                     powerComp.PowerOutput = powerLevels[thing.def.defName][0];
                 }
-            }
-
-            var visibleBuildings = Find.AnyPlayerHomeMap.listerBuildings.allBuildingsColonist.Count;
-            if (visibleBuildings != lastVisibleBuildings)
-            {
-                lastVisibleBuildings = visibleBuildings;
-                ticksToRescan = 0;
-            }
-
-            --ticksToRescan;
-            if (ticksToRescan < 0)
-            {
-                ticksToRescan = 2000;
-                ScanForThings();
             }
 
             foreach (var building in buildingsThatWereUsedLastTick)
@@ -147,6 +104,7 @@ namespace TurnOnOffRePowered
         public override void SettingsChanged()
         {
             base.SettingsChanged();
+            ClearVariables();
             UpdateDefinitions();
         }
 
@@ -168,6 +126,27 @@ namespace TurnOnOffRePowered
             Logger.Message("Registered instance");
         }
 
+        private void ClearVariables()
+        {
+            powerLevels = new Dictionary<string, Vector2>();
+            buildingsToModifyPowerOn.Clear();
+            buildingsThatWereUsedLastTick.Clear();
+            buildingsInUseThisTick.Clear();
+            buildingDefsReservable.Clear();
+            reservableBuildings.Clear();
+            ScheduledBuildingsDefs.Clear();
+            scheduledBuildings.Clear();
+            MedicalBeds.Clear();
+            HiTechResearchBenches.Clear();
+            Autodoors.Clear();
+            DeepDrills.Clear();
+            HydroponcsBasins.Clear();
+            Turrets.Clear();
+            inUseTick = 0;
+            ticksToRescan = 0;
+            lastVisibleBuildings = 0;
+        }
+
         private void UpdateRepowerDefs()
         {
             var defs = DefDatabase<RePowerDef>.AllDefs;
@@ -184,7 +163,7 @@ namespace TurnOnOffRePowered
 
                 if (def.poweredWorkbench)
                 {
-                    RegisterWorkTable(namedDef.defName, def.lowPower, def.highPower);
+                    RegisterPowerUserBuilding(namedDef.defName, def.lowPower, def.highPower);
                 }
 
                 if (def.poweredReservable)
@@ -220,7 +199,7 @@ namespace TurnOnOffRePowered
 
                 if (def.poweredWorkbench)
                 {
-                    RegisterWorkTable(namedDef.defName, def.lowPower, def.highPower);
+                    RegisterPowerUserBuilding(namedDef.defName, def.lowPower, def.highPower);
                 }
 
                 if (def.poweredReservable)
@@ -295,7 +274,7 @@ namespace TurnOnOffRePowered
                         select stringArray).First();
                     if (repowerSetting[3] == "Normal")
                     {
-                        RegisterWorkTable(def.defName, -Convert.ToInt32(repowerSetting[1]),
+                        RegisterPowerUserBuilding(def.defName, -Convert.ToInt32(repowerSetting[1]),
                             -Convert.ToInt32(repowerSetting[2]));
                     }
                     else
@@ -320,7 +299,8 @@ namespace TurnOnOffRePowered
                     continue;
                 }
 
-                if (!typeof(Building_WorkTable).IsAssignableFrom(def.thingClass))
+                if (!typeof(Building_WorkTable).IsAssignableFrom(def.thingClass) &&
+                    !typeof(Building_Turret).IsAssignableFrom(def.thingClass))
                 {
                     continue;
                 }
@@ -331,7 +311,8 @@ namespace TurnOnOffRePowered
                     continue;
                 }
 
-                RegisterWorkTable(def.defName, lowPower, powerProps.basePowerConsumption * highPowerMultiplier * -1);
+                RegisterPowerUserBuilding(def.defName, lowPower,
+                    powerProps.basePowerConsumption * highPowerMultiplier * -1);
             }
 
             Logger.Message("Initialized Components");
@@ -341,13 +322,15 @@ namespace TurnOnOffRePowered
             AutodoorDef = ThingDef.Named("Autodoor");
             DeepDrillDef = ThingDef.Named("DeepDrill");
             HydroponicsBasinDef = ThingDef.Named("HydroponicsBasin");
+            ScanForThings();
         }
 
-        private static void RegisterWorkTable(string defName, float idlePower, float activePower)
+        private static void RegisterPowerUserBuilding(string defName, float idlePower, float activePower)
         {
             if (Prefs.DevMode)
             {
-                Verse.Log.Message($"adding {defName}, low: {idlePower}, high: {activePower}");
+                Verse.Log.Message(
+                    $"adding {DefDatabase<ThingDef>.GetNamedSilentFail(defName).label.CapitalizeFirst()}, low: {idlePower}, high: {activePower}");
             }
 
             powerLevels.Add(defName, new Vector2(idlePower, activePower));
@@ -362,7 +345,8 @@ namespace TurnOnOffRePowered
 
             if (Prefs.DevMode)
             {
-                Verse.Log.Message($"adding {defName}, low: {idlePower}, high: {activePower}");
+                Verse.Log.Message(
+                    $"adding {DefDatabase<ThingDef>.GetNamedSilentFail(defName).label.CapitalizeFirst()}, low: {idlePower}, high: {activePower}");
             }
 
             powerLevels.Add(defName, new Vector2(idlePower, activePower));
@@ -379,7 +363,7 @@ namespace TurnOnOffRePowered
             try
             {
                 var def = DefDatabase<ThingDef>.GetNamedSilentFail(defName);
-                RegisterWorkTable(defName, lowPower, highPower);
+                RegisterPowerUserBuilding(defName, lowPower, highPower);
                 ScheduledBuildingsDefs.Add(def);
             }
             catch (Exception e)
@@ -421,6 +405,7 @@ namespace TurnOnOffRePowered
         private static readonly HashSet<Building_Door> Autodoors = new HashSet<Building_Door>();
         private static readonly HashSet<Building> DeepDrills = new HashSet<Building>();
         private static readonly HashSet<Building> HydroponcsBasins = new HashSet<Building>();
+        private static readonly HashSet<Building_Turret> Turrets = new HashSet<Building_Turret>();
 
         private static ThingDef medicalBedDef;
         private static ThingDef HiTechResearchBenchDef;
@@ -448,7 +433,7 @@ namespace TurnOnOffRePowered
 
                 instance.Logger.Message($"Attempting to register def named {defName}");
 
-                RegisterWorkTable(defName, lowPower, highPower);
+                RegisterPowerUserBuilding(defName, lowPower, highPower);
                 buildingDefsReservable.Add(def);
             }
             catch (Exception e)
@@ -649,6 +634,24 @@ namespace TurnOnOffRePowered
             }
         }
 
+        private void EvalTurrets()
+        {
+            foreach (var turret in Turrets)
+            {
+                if (turret?.Map == null)
+                {
+                    continue;
+                }
+
+                if (turret.CurrentTarget == LocalTargetInfo.Invalid)
+                {
+                    continue;
+                }
+
+                buildingsInUseThisTick.Add(turret);
+            }
+        }
+
         private static HashSet<ThingDef> thingDefsToLookFor;
 
         private static void ScanForThings()
@@ -664,14 +667,20 @@ namespace TurnOnOffRePowered
                 }
             }
 
-            ScanExternalReservable(); // Handle the scanning of external reservable objects
-
             buildingsToModifyPowerOn.Clear();
             MedicalBeds.Clear();
             HiTechResearchBenches.Clear();
             Autodoors.Clear();
             DeepDrills.Clear();
             HydroponcsBasins.Clear();
+            Turrets.Clear();
+
+            if (Current.ProgramState != ProgramState.Playing)
+            {
+                return;
+            }
+
+            ScanExternalReservable(); // Handle the scanning of external reservable objects
 
             var maps = Find.Maps;
             foreach (var map in maps)
@@ -694,6 +703,14 @@ namespace TurnOnOffRePowered
                 // Register High tech research tables too
                 var researchTables = map.listerBuildings.AllBuildingsColonistOfDef(HiTechResearchBenchDef);
                 HiTechResearchBenches.UnionWith(researchTables);
+
+                var turrets = from Building turret in map.listerBuildings.allBuildingsColonist
+                    where typeof(Building_Turret).IsAssignableFrom(turret.def.thingClass)
+                    select turret;
+                foreach (var building in turrets)
+                {
+                    Turrets.Add(building as Building_Turret);
+                }
 
                 var doors = map.listerBuildings.AllBuildingsColonistOfDef(AutodoorDef);
                 foreach (var door in doors)
