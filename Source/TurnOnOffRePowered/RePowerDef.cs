@@ -1,14 +1,20 @@
 ﻿using Verse;
 
+// ReSharper disable once CheckNamespace
 namespace RePower
 {
     public class RePowerDef : Def
     {
-        public string targetDef;
-        public int lowPower;
         public int highPower;
-        public bool poweredWorkbench;
+
+        public int lowPower;
+
         public bool poweredReservable;
+
+        public bool poweredWorkbench;
+
         public bool scheduledPower;
+
+        public string targetDef;
     }
 }

@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 using HugsLib;
 using HugsLib.Settings;
 using RePower;
@@ -12,20 +13,142 @@ namespace TurnOnOffRePowered
 {
     public class TurnItOnandOff : ModBase
     {
-        private static TurnItOnandOff instance;
+        public static readonly HashSet<Building> buildingsToModifyPowerOn = new();
 
         // Power levels pairs as Vector2's, X = Idling, Y = In Use
-        public static Dictionary<string, Vector2> powerLevels = new Dictionary<string, Vector2>();
+        public static Dictionary<string, Vector2> powerLevels = new();
+
+        private static readonly HashSet<ThingDef> AutodoorDefs = new();
+
+        private static readonly HashSet<Building> Autodoors = new();
+
+        private static readonly HashSet<ThingDef> buildingDefsReservable = new();
+
+        private static readonly HashSet<Building> buildingsInUseThisTick = new();
+
+        private static readonly HashSet<Building> buildingsThatWereUsedLastTick = new();
+
+        private static readonly HashSet<Building> DeepDrills = new();
+
+        private static readonly HashSet<Building> HiTechResearchBenches = new();
+
+        private static readonly HashSet<Building> HydroponcsBasins = new();
+
+        private static readonly HashSet<Building_Bed> MedicalBeds = new();
+
+        private static readonly HashSet<Building> reservableBuildings = new();
+
+        private static readonly HashSet<Building_Turret> Turrets = new();
+
+        private static ThingDef DeepDrillDef;
+
+        private static ThingDef HiTechResearchBenchDef;
+
+        private static ThingDef HydroponicsBasinDef;
+
+        private static TurnItOnandOff instance;
+
+        private static int inUseTick;
+
+        private static ThingDef medicalBedDef;
+
+        private static HashSet<ThingDef> thingDefsToLookFor;
+
+        // ReSharper disable once CollectionNeverUpdated.Local
+        private readonly HashSet<Building> scheduledBuildings = new();
+
+        private readonly HashSet<ThingDef> ScheduledBuildingsDefs = new();
+
         private SettingHandle<bool> applyRepowerVanilla;
+
         private SettingHandle<float> highMultiplier;
 
         private int lastVisibleBuildings;
+
         private SettingHandle<float> lowValue;
 
         private int ticksToRescan;
 
+        private SettingHandle<bool> verboseLogging;
 
         public override string ModIdentifier => "TurnOnOffRePowered";
+
+        public static void AddBuildingUsed(Building building)
+        {
+            buildingsInUseThisTick.Add(building);
+        }
+
+        public static void EvalExternalReservable()
+        {
+            foreach (var building in reservableBuildings)
+            {
+                // Cache misses
+                if (building?.Map == null)
+                {
+                    continue;
+                }
+
+                if (building.Map.reservationManager.IsReservedByAnyoneOf(building, building.Faction))
+                {
+                    buildingsInUseThisTick.Add(building);
+                }
+            }
+        }
+
+        public static float PowerFactor(Building building)
+        {
+            var defName = building.def.defName;
+
+            if (!powerLevels.ContainsKey(defName))
+            {
+                return 1;
+            }
+
+            var inUse = buildingsThatWereUsedLastTick.Contains(building);
+            instance.LogMessage($"{building.ThingID} ({defName}) power adjusted");
+            return powerLevels[defName][inUse ? 1 : 0];
+        }
+
+        public override void DefsLoaded()
+        {
+            lowValue = Settings.GetHandle(
+                "lowValue",
+                "lowValue.label".Translate(),
+                "lowValue.tooltip".Translate(),
+                10f,
+                Validators.FloatRangeValidator(1f, 100f));
+            highMultiplier = Settings.GetHandle(
+                "highMultiplier",
+                "highMultiplier.label".Translate(),
+                "highMultiplier.tooltip".Translate(),
+                2.5f,
+                Validators.FloatRangeValidator(0.1f, 10f));
+            applyRepowerVanilla = Settings.GetHandle(
+                "applyRepowerVanilla",
+                "applyRepowerVanilla.label".Translate(),
+                "applyRepowerVanilla.tooltip".Translate(),
+                true);
+            verboseLogging = Settings.GetHandle(
+                "verboseLogging",
+                "verboseLogging.label".Translate(),
+                "verboseLogging.tooltip".Translate(),
+                false);
+            UpdateDefinitions();
+        }
+
+        public override void Initialize()
+        {
+            instance = this;
+
+            LogMessage("Registered instance");
+        }
+
+        public override void SettingsChanged()
+        {
+            base.SettingsChanged();
+            ClearVariables();
+            UpdateDefinitions();
+        }
 
         public override void Tick(int currentTick)
         {
@@ -70,7 +193,7 @@ namespace TurnOnOffRePowered
             {
                 if (thing == null)
                 {
-                    Logger.Message("Tried to modify power level for thing which no longer exists");
+                    LogMessage("Tried to modify power level for thing which no longer exists");
                     continue;
                 }
 
@@ -96,391 +219,60 @@ namespace TurnOnOffRePowered
             }
         }
 
-        public static void Log(string log)
+        private static void EvalAutodoors()
         {
-            instance?.Logger.Message(log);
-        }
-
-        public override void SettingsChanged()
-        {
-            base.SettingsChanged();
-            ClearVariables();
-            UpdateDefinitions();
-        }
-
-        public override void DefsLoaded()
-        {
-            lowValue = Settings.GetHandle("lowValue", "lowValue.label".Translate(), "lowValue.tooltip".Translate(), 10f,
-                Validators.FloatRangeValidator(1f, 100f));
-            highMultiplier = Settings.GetHandle("highMultiplier", "highMultiplier.label".Translate(),
-                "highMultiplier.tooltip".Translate(), 2.5f, Validators.FloatRangeValidator(0.1f, 10f));
-            applyRepowerVanilla = Settings.GetHandle("applyRepowerVanilla", "applyRepowerVanilla.label".Translate(),
-                "applyRepowerVanilla.tooltip".Translate(), true);
-            UpdateDefinitions();
-        }
-
-        public override void Initialize()
-        {
-            instance = this;
-
-            Logger.Message("Registered instance");
-        }
-
-        private void ClearVariables()
-        {
-            powerLevels = new Dictionary<string, Vector2>();
-            buildingsToModifyPowerOn.Clear();
-            buildingsThatWereUsedLastTick.Clear();
-            buildingsInUseThisTick.Clear();
-            buildingDefsReservable.Clear();
-            reservableBuildings.Clear();
-            ScheduledBuildingsDefs.Clear();
-            scheduledBuildings.Clear();
-            MedicalBeds.Clear();
-            HiTechResearchBenches.Clear();
-            Autodoors.Clear();
-            DeepDrills.Clear();
-            HydroponcsBasins.Clear();
-            Turrets.Clear();
-            inUseTick = 0;
-            ticksToRescan = 0;
-            lastVisibleBuildings = 0;
-        }
-
-        private void UpdateRepowerDefs()
-        {
-            var defs = DefDatabase<RePowerDef>.AllDefs;
-
-            foreach (var def in defs)
+            foreach (var autodoor in Autodoors)
             {
-                var targetDef = def.targetDef;
-                var namedDef = DefDatabase<ThingDef>.GetNamedSilentFail(targetDef);
-
-                if (namedDef == null)
+                if (autodoor?.Map == null)
                 {
                     continue;
                 }
 
-                if (def.poweredWorkbench)
+                // If the door allows passage and isn't blocked by an object
+                if (typeof(Building_Door).IsAssignableFrom(autodoor.def.thingClass))
                 {
-                    RegisterPowerUserBuilding(namedDef.defName, def.lowPower, def.highPower);
-                }
-
-                if (def.poweredReservable)
-                {
-                    RegisterExternalReservable(namedDef.defName, def.lowPower, def.highPower);
-                }
-
-                if (def.scheduledPower)
-                {
-                    RegisterScheduledBuilding(namedDef.defName, def.lowPower, def.highPower);
-                }
-
-                // Some objects might not be reservable, like workbenches.
-                // e.g., HydroponicsBasins
-                if (!def.poweredWorkbench && !def.poweredReservable && !def.scheduledPower)
-                {
-                    powerLevels.Add(namedDef.defName, new Vector2(def.lowPower, def.highPower));
-                }
-            }
-        }
-
-        private void UpdateTurnItOnandOffDefs()
-        {
-            var defs = DefDatabase<TurnItOnandOffDef>.AllDefs;
-            foreach (var def in defs)
-            {
-                var target = def.targetDef;
-                var namedDef = DefDatabase<ThingDef>.GetNamedSilentFail(target);
-                if (namedDef == null)
-                {
-                    continue;
-                }
-
-                if (def.poweredWorkbench)
-                {
-                    RegisterPowerUserBuilding(namedDef.defName, def.lowPower, def.highPower);
-                }
-
-                if (def.poweredReservable)
-                {
-                    RegisterExternalReservable(namedDef.defName, def.lowPower, def.highPower);
-                }
-            }
-        }
-
-        private void UpdateDefinitions()
-        {
-            if (Prefs.DevMode)
-            {
-                Verse.Log.Message("Clearing power-levels");
-            }
-
-            powerLevels = new Dictionary<string, Vector2>();
-            UpdateRepowerDefs();
-            UpdateTurnItOnandOffDefs();
-            var lowPower = -10f;
-            if (lowValue != null)
-            {
-                lowPower = lowValue.Value * -1;
-            }
-
-            var highPowerMultiplier = 2.5f;
-            if (highMultiplier != null)
-            {
-                highPowerMultiplier = highMultiplier.Value;
-            }
-
-            var repowerVanilla = new List<string[]>
-            {
-                new[] {"ElectricCrematorium", "200", "750", "Normal"},
-                new[] {"ElectricSmelter", "400", "4500", "Normal"},
-                new[] {"HiTechResearchBench", "100", "1000", "Normal"},
-                new[] {"HydroponicsBasin", "5", "75", "Special"},
-                //new string[] { "SunLamp", "0", "2900", "Special" },
-                new[] {"Autodoor", "5", "500", "Special"}
-            };
-            var specialCases = new List<string>
-            {
-                "MultiAnalyzer",
-                "VitalsMonitor",
-                "DeepDrill"
-            };
-            foreach (var tv in from tvDef in DefDatabase<ThingDef>.AllDefsListForReading
-                where tvDef.building?.joyKind == DefDatabase<JoyKindDef>.GetNamed("Television")
-                select tvDef)
-            {
-                specialCases.Add(tv.defName);
-            }
-
-            if (!applyRepowerVanilla)
-            {
-                repowerVanilla = new List<string[]>
-                {
-                    //new string[] { "SunLamp", "0", "2900", "Special" },
-                    new[] {"Autodoor", "5", "500", "Special"}
-                };
-                specialCases.Add("HiTechResearchBench");
-            }
-
-
-            foreach (var def in DefDatabase<ThingDef>.AllDefsListForReading)
-            {
-                CompProperties_Power powerProps;
-                if ((from stringArray in repowerVanilla where stringArray[0] == def.defName select stringArray).Any())
-                {
-                    var repowerSetting = (from stringArray in repowerVanilla
-                        where stringArray[0] == def.defName
-                        select stringArray).First();
-                    if (repowerSetting[3] == "Normal")
+                    if (((Building_Door)autodoor).Open && !((Building_Door)autodoor).BlockedOpenMomentary)
                     {
-                        RegisterPowerUserBuilding(def.defName, -Convert.ToInt32(repowerSetting[1]),
-                            -Convert.ToInt32(repowerSetting[2]));
-                    }
-                    else
-                    {
-                        RegisterSpecialPowerTrader(def.defName, -Convert.ToInt32(repowerSetting[1]),
-                            -Convert.ToInt32(repowerSetting[2]));
+                        buildingsInUseThisTick.Add(autodoor);
                     }
 
                     continue;
                 }
 
-                if (specialCases.Contains(def.defName))
+                // ReSharper disable once InvertIf
+                if (autodoor.def.thingClass.FullName == "DoorsExpanded.Building_DoorRemote")
                 {
-                    powerProps = def.GetCompProperties<CompProperties_Power>();
-                    RegisterSpecialPowerTrader(def.defName, lowPower,
-                        powerProps.basePowerConsumption * highPowerMultiplier * -1);
-                    continue;
-                }
+                    var openState = (bool)autodoor.def.thingClass.InvokeMember(
+                        "Open",
+                        BindingFlags.GetProperty | BindingFlags.Public | BindingFlags.Instance,
+                        null,
+                        autodoor,
+                        null);
 
-                if (powerLevels.ContainsKey(def.defName))
-                {
-                    continue;
-                }
+                    var blockedOpenMomentaryState = (bool)autodoor.def.thingClass.InvokeMember(
+                        "BlockedOpenMomentary",
+                        BindingFlags.GetProperty | BindingFlags.Public | BindingFlags.Instance,
+                        null,
+                        autodoor,
+                        null);
+                    var holdOpenRemotelyState = (bool)autodoor.def.thingClass.InvokeMember(
+                        "HoldOpenRemotely",
+                        BindingFlags.GetProperty | BindingFlags.Public | BindingFlags.Instance,
+                        null,
+                        autodoor,
+                        null);
+                    var ticksTillFullyOpenedState = (int)autodoor.def.thingClass.InvokeMember(
+                        "TicksTillFullyOpened",
+                        BindingFlags.GetProperty | BindingFlags.Public | BindingFlags.Instance,
+                        null,
+                        autodoor,
+                        null);
 
-                if (!typeof(Building_WorkTable).IsAssignableFrom(def.thingClass) &&
-                    !typeof(Building_Turret).IsAssignableFrom(def.thingClass))
-                {
-                    continue;
-                }
-
-                powerProps = def.GetCompProperties<CompProperties_Power>();
-                if (powerProps == null || !typeof(CompPowerTrader).IsAssignableFrom(powerProps.compClass))
-                {
-                    continue;
-                }
-
-                RegisterPowerUserBuilding(def.defName, lowPower,
-                    powerProps.basePowerConsumption * highPowerMultiplier * -1);
-            }
-
-            Logger.Message("Initialized Components");
-
-            medicalBedDef = ThingDef.Named("HospitalBed");
-            HiTechResearchBenchDef = ThingDef.Named("HiTechResearchBench");
-            AutodoorDef = ThingDef.Named("Autodoor");
-            DeepDrillDef = ThingDef.Named("DeepDrill");
-            HydroponicsBasinDef = ThingDef.Named("HydroponicsBasin");
-            ScanForThings();
-        }
-
-        private static void RegisterPowerUserBuilding(string defName, float idlePower, float activePower)
-        {
-            if (Prefs.DevMode)
-            {
-                Verse.Log.Message(
-                    $"adding {DefDatabase<ThingDef>.GetNamedSilentFail(defName).label.CapitalizeFirst()}, low: {idlePower}, high: {activePower}");
-            }
-
-            powerLevels.Add(defName, new Vector2(idlePower, activePower));
-        }
-
-        private static void RegisterSpecialPowerTrader(string defName, float idlePower, float activePower)
-        {
-            if (powerLevels.ContainsKey(defName))
-            {
-                return;
-            }
-
-            if (Prefs.DevMode)
-            {
-                Verse.Log.Message(
-                    $"adding {DefDatabase<ThingDef>.GetNamedSilentFail(defName).label.CapitalizeFirst()}, low: {idlePower}, high: {activePower}");
-            }
-
-            powerLevels.Add(defName, new Vector2(idlePower, activePower));
-        }
-
-        private void RegisterScheduledBuilding(string defName, int lowPower, int highPower)
-        {
-            if (defName == null)
-            {
-                Logger.Warning("Defname is null");
-                return;
-            }
-
-            try
-            {
-                var def = DefDatabase<ThingDef>.GetNamedSilentFail(defName);
-                RegisterPowerUserBuilding(defName, lowPower, highPower);
-                ScheduledBuildingsDefs.Add(def);
-            }
-            catch (Exception e)
-            {
-                Logger.Error($"Error while registering a scheduled building: {e.Message}");
-            }
-        }
-
-        public static float PowerFactor(Building building)
-        {
-            var defName = building.def.defName;
-
-            if (!powerLevels.ContainsKey(defName))
-            {
-                return 1;
-            }
-
-            var inUse = buildingsThatWereUsedLastTick.Contains(building);
-            instance.Logger.Message($"{building.ThingID} ({defName}) power adjusted");
-            return powerLevels[defName][inUse ? 1 : 0];
-        }
-
-        #region tracking
-
-        private static int inUseTick;
-        private static readonly HashSet<Building> buildingsThatWereUsedLastTick = new HashSet<Building>();
-        private static readonly HashSet<Building> buildingsInUseThisTick = new HashSet<Building>();
-        public static readonly HashSet<Building> buildingsToModifyPowerOn = new HashSet<Building>();
-
-        private static readonly HashSet<ThingDef> buildingDefsReservable = new HashSet<ThingDef>();
-        private static readonly HashSet<Building> reservableBuildings = new HashSet<Building>();
-
-        private readonly HashSet<ThingDef> ScheduledBuildingsDefs = new HashSet<ThingDef>();
-        private readonly HashSet<Building> scheduledBuildings = new HashSet<Building>();
-
-        private static readonly HashSet<Building_Bed> MedicalBeds = new HashSet<Building_Bed>();
-        private static readonly HashSet<Building> HiTechResearchBenches = new HashSet<Building>();
-
-        private static readonly HashSet<Building_Door> Autodoors = new HashSet<Building_Door>();
-        private static readonly HashSet<Building> DeepDrills = new HashSet<Building>();
-        private static readonly HashSet<Building> HydroponcsBasins = new HashSet<Building>();
-        private static readonly HashSet<Building_Turret> Turrets = new HashSet<Building_Turret>();
-
-        private static ThingDef medicalBedDef;
-        private static ThingDef HiTechResearchBenchDef;
-        private static ThingDef AutodoorDef;
-        private static ThingDef DeepDrillDef;
-        private static ThingDef HydroponicsBasinDef;
-
-        public static void AddBuildingUsed(Building building)
-        {
-            buildingsInUseThisTick.Add(building);
-        }
-
-        private static void RegisterExternalReservable(string defName, int lowPower, int highPower)
-        {
-            try
-            {
-                var def = DefDatabase<ThingDef>.GetNamedSilentFail(defName);
-
-                if (defName == null)
-                {
-                    instance.Logger.Message(
-                        "Defname could not be found, it's respective mod probably isn't loaded");
-                    return;
-                }
-
-                instance.Logger.Message($"Attempting to register def named {defName}");
-
-                RegisterPowerUserBuilding(defName, lowPower, highPower);
-                buildingDefsReservable.Add(def);
-            }
-            catch (Exception e)
-            {
-                instance.Logger.Message(e.Message);
-            }
-        }
-
-        private static void ScanExternalReservable()
-        {
-            reservableBuildings.Clear();
-            foreach (var def in buildingDefsReservable)
-            {
-                foreach (var map in Find.Maps)
-                {
-                    if (map == null)
+                    if (openState && !blockedOpenMomentaryState
+                                  && !(holdOpenRemotelyState && ticksTillFullyOpenedState == 0))
                     {
-                        continue;
+                        buildingsInUseThisTick.Add(autodoor);
                     }
-
-                    var buildings = map.listerBuildings.AllBuildingsColonistOfDef(def);
-                    foreach (var building in buildings)
-                    {
-                        if (building == null)
-                        {
-                            continue;
-                        }
-
-                        reservableBuildings.Add(building);
-                    }
-                }
-            }
-        }
-
-        public static void EvalExternalReservable()
-        {
-            foreach (var building in reservableBuildings)
-            {
-                // Cache misses
-                if (building?.Map == null)
-                {
-                    continue;
-                }
-
-                if (building.Map.reservationManager.IsReservedByAnyoneOf(building, building.Faction))
-                {
-                    buildingsInUseThisTick.Add(building);
                 }
             }
         }
@@ -546,7 +338,8 @@ namespace TurnOnOffRePowered
                 }
 
                 // Determine if we are reserved:
-                var inUse = researchTable.Map.reservationManager.IsReservedByAnyoneOf(researchTable,
+                var inUse = researchTable.Map.reservationManager.IsReservedByAnyoneOf(
+                    researchTable,
                     researchTable.Faction);
 
                 if (!inUse)
@@ -563,96 +356,75 @@ namespace TurnOnOffRePowered
             }
         }
 
-        private void EvalScheduledBuildings()
+        private static void RegisterExternalReservable(string defName, int lowPower, int highPower)
         {
-            foreach (var building in scheduledBuildings)
+            try
             {
-                if (building?.Map == null)
+                var def = DefDatabase<ThingDef>.GetNamedSilentFail(defName);
+
+                if (defName == null)
                 {
-                    continue;
+                    instance.LogMessage("Defname could not be found, it's respective mod probably isn't loaded");
+                    return;
                 }
 
-                var comp = building.GetComp<CompSchedule>();
-                if (comp == null)
-                {
-                    continue; // Doesn't actually have a schedule
-                }
+                instance.LogMessage($"Attempting to register def named {defName}");
 
-                if (comp.Allowed)
-                {
-                    buildingsInUseThisTick.Add(building);
-                }
+                RegisterPowerUserBuilding(defName, lowPower, highPower);
+                buildingDefsReservable.Add(def);
+            }
+            catch (Exception e)
+            {
+                instance.Logger.Message(e.Message);
             }
         }
 
-        private static void EvalAutodoors()
+        private static void RegisterPowerUserBuilding(string defName, float idlePower, float activePower)
         {
-            foreach (var autodoor in Autodoors)
-            {
-                if (autodoor?.Map == null)
-                {
-                    continue;
-                }
+            instance.LogMessage(
+                $"adding {DefDatabase<ThingDef>.GetNamedSilentFail(defName).label.CapitalizeFirst()}, low: {idlePower}, high: {activePower}");
 
-                // If the door allows passage and isn't blocked by an object
-                var inUse = autodoor.Open && !autodoor.BlockedOpenMomentary;
-                if (inUse)
-                {
-                    buildingsInUseThisTick.Add(autodoor);
-                }
-            }
+            powerLevels.Add(defName, new Vector2(idlePower, activePower));
         }
 
-        private void EvalHydroponicsBasins()
+        private static void RegisterSpecialPowerTrader(string defName, float idlePower, float activePower)
         {
-            if (ModLister.GetActiveModWithIdentifier("Aidan.SelfLitHydroponics") != null)
+            if (powerLevels.ContainsKey(defName))
             {
                 return;
             }
 
-            foreach (var basin in HydroponcsBasins)
-            {
-                if (basin?.Map == null)
-                {
-                    continue;
-                }
+            instance.LogMessage(
+                $"adding {DefDatabase<ThingDef>.GetNamedSilentFail(defName).label.CapitalizeFirst()}, low: {idlePower}, high: {activePower}");
 
-                foreach (var tile in basin.OccupiedRect())
+            powerLevels.Add(defName, new Vector2(idlePower, activePower));
+        }
+
+        private static void ScanExternalReservable()
+        {
+            reservableBuildings.Clear();
+            foreach (var def in buildingDefsReservable)
+            {
+                foreach (var map in Find.Maps)
                 {
-                    var thingsOnTile = basin.Map.thingGrid.ThingsListAt(tile);
-                    foreach (var thing in thingsOnTile)
+                    if (map == null)
                     {
-                        if (!(thing is Plant))
+                        continue;
+                    }
+
+                    var buildings = map.listerBuildings.AllBuildingsColonistOfDef(def);
+                    foreach (var building in buildings)
+                    {
+                        if (building == null)
                         {
                             continue;
                         }
 
-                        buildingsInUseThisTick.Add(basin);
-                        break;
+                        reservableBuildings.Add(building);
                     }
                 }
             }
         }
-
-        private void EvalTurrets()
-        {
-            foreach (var turret in Turrets)
-            {
-                if (turret?.Map == null)
-                {
-                    continue;
-                }
-
-                if (turret.CurrentTarget == LocalTargetInfo.Invalid)
-                {
-                    continue;
-                }
-
-                buildingsInUseThisTick.Add(turret);
-            }
-        }
-
-        private static HashSet<ThingDef> thingDefsToLookFor;
 
         private static void ScanForThings()
         {
@@ -688,8 +460,20 @@ namespace TurnOnOffRePowered
                 foreach (var def in thingDefsToLookFor)
                 {
                     var matchingThings = map.listerBuildings.AllBuildingsColonistOfDef(def);
+
                     // Merge in all matching things
                     buildingsToModifyPowerOn.UnionWith(matchingThings);
+                }
+
+                foreach (var def in AutodoorDefs)
+                {
+                    var autoDoorsFound = map.listerBuildings.AllBuildingsColonistOfDef(def);
+
+                    // Merge in all matching things
+                    foreach (var building in autoDoorsFound)
+                    {
+                        Autodoors.Add(building);
+                    }
                 }
 
                 // Register the medical beds in the watch list
@@ -705,18 +489,11 @@ namespace TurnOnOffRePowered
                 HiTechResearchBenches.UnionWith(researchTables);
 
                 var turrets = from Building turret in map.listerBuildings.allBuildingsColonist
-                    where typeof(Building_Turret).IsAssignableFrom(turret.def.thingClass)
-                    select turret;
+                              where typeof(Building_Turret).IsAssignableFrom(turret.def.thingClass)
+                              select turret;
                 foreach (var building in turrets)
                 {
                     Turrets.Add(building as Building_Turret);
-                }
-
-                var doors = map.listerBuildings.AllBuildingsColonistOfDef(AutodoorDef);
-                foreach (var door in doors)
-                {
-                    var autodoor = door as Building_Door;
-                    Autodoors.Add(autodoor);
                 }
 
                 var deepDrills = map.listerBuildings.AllBuildingsColonistOfDef(DeepDrillDef);
@@ -727,6 +504,326 @@ namespace TurnOnOffRePowered
             }
         }
 
-        #endregion
+        private void ClearVariables()
+        {
+            powerLevels = new Dictionary<string, Vector2>();
+            buildingsToModifyPowerOn.Clear();
+            buildingsThatWereUsedLastTick.Clear();
+            buildingsInUseThisTick.Clear();
+            buildingDefsReservable.Clear();
+            reservableBuildings.Clear();
+            ScheduledBuildingsDefs.Clear();
+            scheduledBuildings.Clear();
+            MedicalBeds.Clear();
+            HiTechResearchBenches.Clear();
+            Autodoors.Clear();
+            DeepDrills.Clear();
+            HydroponcsBasins.Clear();
+            Turrets.Clear();
+            inUseTick = 0;
+            ticksToRescan = 0;
+            lastVisibleBuildings = 0;
+        }
+
+        private void EvalHydroponicsBasins()
+        {
+            if (ModLister.GetActiveModWithIdentifier("Aidan.SelfLitHydroponics") != null)
+            {
+                return;
+            }
+
+            foreach (var basin in HydroponcsBasins)
+            {
+                if (basin?.Map == null)
+                {
+                    continue;
+                }
+
+                foreach (var tile in basin.OccupiedRect())
+                {
+                    var thingsOnTile = basin.Map.thingGrid.ThingsListAt(tile);
+                    foreach (var thing in thingsOnTile)
+                    {
+                        if (!(thing is Plant))
+                        {
+                            continue;
+                        }
+
+                        buildingsInUseThisTick.Add(basin);
+                        break;
+                    }
+                }
+            }
+        }
+
+        private void EvalScheduledBuildings()
+        {
+            foreach (var building in scheduledBuildings)
+            {
+                if (building?.Map == null)
+                {
+                    continue;
+                }
+
+                var comp = building.GetComp<CompSchedule>();
+                if (comp == null)
+                {
+                    continue; // Doesn't actually have a schedule
+                }
+
+                if (comp.Allowed)
+                {
+                    buildingsInUseThisTick.Add(building);
+                }
+            }
+        }
+
+        private void EvalTurrets()
+        {
+            foreach (var turret in Turrets)
+            {
+                if (turret?.Map == null)
+                {
+                    continue;
+                }
+
+                if (turret.CurrentTarget == LocalTargetInfo.Invalid)
+                {
+                    continue;
+                }
+
+                buildingsInUseThisTick.Add(turret);
+            }
+        }
+
+        private bool IsDoorType(ThingDef def)
+        {
+            if (typeof(Building_Door).IsAssignableFrom(def.thingClass))
+            {
+                return true;
+            }
+
+            if (def.thingClass.FullName == "DoorsExpanded.Building_DoorRemote")
+            {
+                return true;
+            }
+
+            return false;
+        }
+
+        private void LogMessage(string Message)
+        {
+            if (verboseLogging == null || !verboseLogging.Value)
+            {
+                return;
+            }
+
+            Log.Message($"[TurnOnOffRePowered]: {Message}");
+        }
+
+        private void RegisterScheduledBuilding(string defName, int lowPower, int highPower)
+        {
+            if (defName == null)
+            {
+                Logger.Warning("Defname is null");
+                return;
+            }
+
+            try
+            {
+                var def = DefDatabase<ThingDef>.GetNamedSilentFail(defName);
+                RegisterPowerUserBuilding(defName, lowPower, highPower);
+                ScheduledBuildingsDefs.Add(def);
+            }
+            catch (Exception e)
+            {
+                Logger.Error($"Error while registering a scheduled building: {e.Message}");
+            }
+        }
+
+        private void UpdateDefinitions()
+        {
+            LogMessage("Clearing power-levels");
+
+            powerLevels = new Dictionary<string, Vector2>();
+            UpdateRepowerDefs();
+            UpdateTurnItOnandOffDefs();
+            var lowPower = -10f;
+            if (lowValue != null)
+            {
+                lowPower = lowValue.Value * -1;
+            }
+
+            var highPowerMultiplier = 2.5f;
+            if (highMultiplier != null)
+            {
+                highPowerMultiplier = highMultiplier.Value;
+            }
+
+            var repowerVanilla = new List<string[]>
+                                     {
+                                         new[] { "ElectricCrematorium", "200", "750", "Normal" },
+                                         new[] { "ElectricSmelter", "400", "4500", "Normal" },
+                                         new[] { "HiTechResearchBench", "100", "1000", "Normal" },
+                                         new[] { "HydroponicsBasin", "5", "75", "Special" }
+
+                                         // new string[] { "SunLamp", "0", "2900", "Special" },
+                                         // new[] { "Autodoor", "5", "500", "Special" }
+                                     };
+            var specialCases = new List<string> { "MultiAnalyzer", "VitalsMonitor", "DeepDrill" };
+            foreach (var tv in from tvDef in DefDatabase<ThingDef>.AllDefsListForReading
+                               where tvDef.building?.joyKind == DefDatabase<JoyKindDef>.GetNamed("Television")
+                               select tvDef)
+            {
+                specialCases.Add(tv.defName);
+            }
+
+            if (!applyRepowerVanilla)
+            {
+                repowerVanilla = new List<string[]>();
+                specialCases.Add("HiTechResearchBench");
+            }
+
+            foreach (var def in DefDatabase<ThingDef>.AllDefsListForReading)
+            {
+                if ((from stringArray in repowerVanilla where stringArray[0] == def.defName select stringArray).Any())
+                {
+                    var repowerSetting = (from stringArray in repowerVanilla
+                                          where stringArray[0] == def.defName
+                                          select stringArray).First();
+                    if (repowerSetting[3] == "Normal")
+                    {
+                        RegisterPowerUserBuilding(
+                            def.defName,
+                            -Convert.ToInt32(repowerSetting[1]),
+                            -Convert.ToInt32(repowerSetting[2]));
+                    }
+                    else
+                    {
+                        RegisterSpecialPowerTrader(
+                            def.defName,
+                            -Convert.ToInt32(repowerSetting[1]),
+                            -Convert.ToInt32(repowerSetting[2]));
+                    }
+
+                    continue;
+                }
+
+                var powerProps = def.GetCompProperties<CompProperties_Power>();
+                if (powerProps == null || !typeof(CompPowerTrader).IsAssignableFrom(powerProps.compClass))
+                {
+                    // LogMessage($"{def.defName} does not require power");
+                    continue;
+                }
+
+                if (powerLevels.ContainsKey(def.defName))
+                {
+                    // LogMessage($"{def.defName} already is defined in powerlevels");
+                    continue;
+                }
+
+                if (specialCases.Contains(def.defName))
+                {
+                    RegisterSpecialPowerTrader(
+                        def.defName,
+                        lowPower,
+                        powerProps.basePowerConsumption * highPowerMultiplier * -1);
+                    continue;
+                }
+
+                if (!typeof(Building_WorkTable).IsAssignableFrom(def.thingClass)
+                    && !typeof(Building_Turret).IsAssignableFrom(def.thingClass) && !IsDoorType(def))
+                {
+                    // LogMessage(
+                    // $"{def.defName} with thingClass {def.thingClass} is not Building_WorkTable/Building_Turret/Building_Door");
+                    continue;
+                }
+
+                if (IsDoorType(def))
+                {
+                    AutodoorDefs.Add(def);
+                    RegisterSpecialPowerTrader(
+                        def.defName,
+                        (int)(powerProps.basePowerConsumption / 10) * -1,
+                        powerProps.basePowerConsumption * 10 * -1);
+                    continue;
+                }
+
+                RegisterPowerUserBuilding(
+                    def.defName,
+                    lowPower,
+                    powerProps.basePowerConsumption * highPowerMultiplier * -1);
+            }
+
+            LogMessage("Initialized Components");
+
+            medicalBedDef = ThingDef.Named("HospitalBed");
+            HiTechResearchBenchDef = ThingDef.Named("HiTechResearchBench");
+            DeepDrillDef = ThingDef.Named("DeepDrill");
+            HydroponicsBasinDef = ThingDef.Named("HydroponicsBasin");
+            ScanForThings();
+        }
+
+        private void UpdateRepowerDefs()
+        {
+            var defs = DefDatabase<RePowerDef>.AllDefs;
+
+            foreach (var def in defs)
+            {
+                var targetDef = def.targetDef;
+                var namedDef = DefDatabase<ThingDef>.GetNamedSilentFail(targetDef);
+
+                if (namedDef == null)
+                {
+                    continue;
+                }
+
+                if (def.poweredWorkbench)
+                {
+                    RegisterPowerUserBuilding(namedDef.defName, def.lowPower, def.highPower);
+                }
+
+                if (def.poweredReservable)
+                {
+                    RegisterExternalReservable(namedDef.defName, def.lowPower, def.highPower);
+                }
+
+                if (def.scheduledPower)
+                {
+                    RegisterScheduledBuilding(namedDef.defName, def.lowPower, def.highPower);
+                }
+
+                // Some objects might not be reservable, like workbenches.
+                // e.g., HydroponicsBasins
+                if (!def.poweredWorkbench && !def.poweredReservable && !def.scheduledPower)
+                {
+                    powerLevels.Add(namedDef.defName, new Vector2(def.lowPower, def.highPower));
+                }
+            }
+        }
+
+        private void UpdateTurnItOnandOffDefs()
+        {
+            var defs = DefDatabase<TurnItOnandOffDef>.AllDefs;
+            foreach (var def in defs)
+            {
+                var target = def.targetDef;
+                var namedDef = DefDatabase<ThingDef>.GetNamedSilentFail(target);
+                if (namedDef == null)
+                {
+                    continue;
+                }
+
+                if (def.poweredWorkbench)
+                {
+                    RegisterPowerUserBuilding(namedDef.defName, def.lowPower, def.highPower);
+                }
+
+                if (def.poweredReservable)
+                {
+                    RegisterExternalReservable(namedDef.defName, def.lowPower, def.highPower);
+                }
+            }
+        }
     }
 }

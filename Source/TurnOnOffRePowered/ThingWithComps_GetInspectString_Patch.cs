@@ -11,8 +11,8 @@ namespace TurnOnOffRePowered
         [HarmonyPostfix]
         public static void AddRequiredText(ThingWithComps __instance, ref string __result)
         {
-            if (!TurnItOnandOff.buildingsToModifyPowerOn.Contains(__instance) ||
-                !TurnItOnandOff.powerLevels.ContainsKey(__instance.def.defName))
+            if (!TurnItOnandOff.buildingsToModifyPowerOn.Contains(__instance)
+                || !TurnItOnandOff.powerLevels.ContainsKey(__instance.def.defName))
             {
                 return;
             }

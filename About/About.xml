@@ -50,6 +50,8 @@ It also supports the patches from RePower for special cases or personal settings
 
 Its safe to add and remove from saves, and should not affect performance any more than either of the previous mods.
 
+- Added support for turrets, turrets that use the Building_Turret class will now draw high-power when having an active target.
+
 If you want, you can use this along with my patch-pack for RePower:
 https://steamcommunity.com/sharedfiles/filedetails/?id=1836577627
 
