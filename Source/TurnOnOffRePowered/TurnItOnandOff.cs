@@ -52,6 +52,8 @@ namespace TurnOnOffRePowered
 
         private static ThingDef medicalBedDef;
 
+        private static bool rimfactoryIsLoaded;
+
         private static HashSet<ThingDef> thingDefsToLookFor;
 
         // ReSharper disable once CollectionNeverUpdated.Local
@@ -76,23 +78,6 @@ namespace TurnOnOffRePowered
         public static void AddBuildingUsed(Building building)
         {
             buildingsInUseThisTick.Add(building);
-        }
-
-        public static void EvalExternalReservable()
-        {
-            foreach (var building in reservableBuildings)
-            {
-                // Cache misses
-                if (building?.Map == null)
-                {
-                    continue;
-                }
-
-                if (building.Map.reservationManager.IsReservedByAnyoneOf(building, building.Faction))
-                {
-                    buildingsInUseThisTick.Add(building);
-                }
-            }
         }
 
         public static float PowerFactor(Building building)
@@ -133,6 +118,12 @@ namespace TurnOnOffRePowered
                 "verboseLogging.label".Translate(),
                 "verboseLogging.tooltip".Translate(),
                 false);
+            rimfactoryIsLoaded = ModLister.GetActiveModWithIdentifier("spdskatr.projectrimfactory") != null;
+            if (rimfactoryIsLoaded)
+            {
+                LogMessage("Project Rimfactory is loaded");
+            }
+
             UpdateDefinitions();
         }
 
@@ -152,6 +143,7 @@ namespace TurnOnOffRePowered
 
         public override void Tick(int currentTick)
         {
+            EvaluateRimfactoryWork();
             if (inUseTick == 0)
             {
                 inUseTick = currentTick;
@@ -352,6 +344,45 @@ namespace TurnOnOffRePowered
                 foreach (var facility in facilityAffector.LinkedFacilitiesListForReading)
                 {
                     buildingsInUseThisTick.Add(facility as Building);
+                }
+            }
+        }
+
+        private static void EvaluateRimfactoryWork()
+        {
+            if (!rimfactoryIsLoaded)
+            {
+                return;
+            }
+
+            foreach (var building in buildingsToModifyPowerOn)
+            {
+                // Cache misses
+                if (building?.Map == null)
+                {
+                    continue;
+                }
+
+                if (buildingsInUseThisTick.Contains(building))
+                {
+                    continue;
+                }
+
+                var interactionSpotBuilding = building.InteractionCell.GetFirstBuilding(building.Map);
+
+                if (interactionSpotBuilding?.def.thingClass.FullName == null)
+                {
+                    continue;
+                }
+
+                if (!interactionSpotBuilding.def.thingClass.FullName.StartsWith("ProjectRimFactory"))
+                {
+                    continue;
+                }
+
+                if (interactionSpotBuilding.GetInspectString().Contains("%)]"))
+                {
+                    buildingsInUseThisTick.Add(building);
                 }
             }
         }
