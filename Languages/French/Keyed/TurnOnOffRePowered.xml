@@ -1,0 +1,14 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<LanguageData>
+  <!--  Settings -->
+  <lowValue.label>Consommation en veille</lowValue.label>
+  <lowValue.tooltip>Combien de watts doivent être consommés lorsque l'objet est en veille?</lowValue.tooltip>
+  <highMultiplier.label>Multiplicateur de puissance lors de l'utilisation</highMultiplier.label>
+  <highMultiplier.tooltip>Par combien multiplier la valeur initiale ?</highMultiplier.tooltip>
+  <applyRepowerVanilla.label>Appliquer les paramètres d'alimentation intégrés du RePower-mod d'origine</applyRepowerVanilla.label>
+  <verboseLogging.label>Journalisation détaillée</verboseLogging.label>
+  <verboseLogging.tooltip>Affiche tous les niveaux de puissance dans le journal au démarrage</verboseLogging.tooltip>
+  <applyRepowerVanilla.tooltip>Le RePower-mod avait des valeurs par défaut pour le crématorium, la fonderie et le banc de recherche de haute technologie, augmentant la valeur haute et basse de ces bâtiments indépendamment des paramètres ci-dessus.</applyRepowerVanilla.tooltip>
+  <powerNeededActive>actif</powerNeededActive>
+  <powerNeededInactive>inactif</powerNeededInactive>
+</LanguageData>
