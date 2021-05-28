@@ -27,6 +27,7 @@ Its safe to add and remove from saves, and should not affect performance any mor
 - Added support for all autodoors that use the vanilla door-class
 - Added support for https://steamcommunity.com/sharedfiles/filedetails/?id=2195733555]Doors Expanded
 - Added support for https://steamcommunity.com/sharedfiles/filedetails/?id=2033979700]Project RimFactory Revived
+- French translation added, thanks qux!
 
 If you want, you can use this along with my patch-pack for RePower:
 https://steamcommunity.com/sharedfiles/filedetails/?id=1836577627

@@ -13,32 +13,32 @@ namespace TurnOnOffRePowered
 {
     public class TurnItOnandOff : ModBase
     {
-        public static readonly HashSet<Building> buildingsToModifyPowerOn = new();
+        public static readonly HashSet<Building> buildingsToModifyPowerOn = new HashSet<Building>();
 
         // Power levels pairs as Vector2's, X = Idling, Y = In Use
-        public static Dictionary<string, Vector2> powerLevels = new();
+        public static Dictionary<string, Vector2> powerLevels = new Dictionary<string, Vector2>();
 
-        private static readonly HashSet<ThingDef> AutodoorDefs = new();
+        private static readonly HashSet<ThingDef> AutodoorDefs = new HashSet<ThingDef>();
 
-        private static readonly HashSet<Building> Autodoors = new();
+        private static readonly HashSet<Building> Autodoors = new HashSet<Building>();
 
-        private static readonly HashSet<ThingDef> buildingDefsReservable = new();
+        private static readonly HashSet<ThingDef> buildingDefsReservable = new HashSet<ThingDef>();
 
-        private static readonly HashSet<Building> buildingsInUseThisTick = new();
+        private static readonly HashSet<Building> buildingsInUseThisTick = new HashSet<Building>();
 
-        private static readonly HashSet<Building> buildingsThatWereUsedLastTick = new();
+        private static readonly HashSet<Building> buildingsThatWereUsedLastTick = new HashSet<Building>();
 
-        private static readonly HashSet<Building> DeepDrills = new();
+        private static readonly HashSet<Building> DeepDrills = new HashSet<Building>();
 
-        private static readonly HashSet<Building> HiTechResearchBenches = new();
+        private static readonly HashSet<Building> HiTechResearchBenches = new HashSet<Building>();
 
-        private static readonly HashSet<Building> HydroponcsBasins = new();
+        private static readonly HashSet<Building> HydroponcsBasins = new HashSet<Building>();
 
-        private static readonly HashSet<Building_Bed> MedicalBeds = new();
+        private static readonly HashSet<Building_Bed> MedicalBeds = new HashSet<Building_Bed>();
 
-        private static readonly HashSet<Building> reservableBuildings = new();
+        private static readonly HashSet<Building> reservableBuildings = new HashSet<Building>();
 
-        private static readonly HashSet<Building_Turret> Turrets = new();
+        private static readonly HashSet<Building_Turret> Turrets = new HashSet<Building_Turret>();
 
         private static ThingDef DeepDrillDef;
 
@@ -57,9 +57,9 @@ namespace TurnOnOffRePowered
         private static HashSet<ThingDef> thingDefsToLookFor;
 
         // ReSharper disable once CollectionNeverUpdated.Local
-        private readonly HashSet<Building> scheduledBuildings = new();
+        private readonly HashSet<Building> scheduledBuildings = new HashSet<Building>();
 
-        private readonly HashSet<ThingDef> ScheduledBuildingsDefs = new();
+        private readonly HashSet<ThingDef> ScheduledBuildingsDefs = new HashSet<ThingDef>();
 
         private SettingHandle<bool> applyRepowerVanilla;
 
@@ -159,10 +159,18 @@ namespace TurnOnOffRePowered
                 buildingsInUseThisTick.Clear();
             }
 
-            var visibleBuildings = Find.AnyPlayerHomeMap.listerBuildings.allBuildingsColonist.Count;
+            if (Find.CurrentMap == null)
+            {
+                Log.ErrorOnce("[TurnOnOffRepowered] No home map found, cannot find any colony-owned buildings",
+                    "TurnOnOffRepowered".GetHashCode());
+                return;
+            }
+
+            var visibleBuildings = Find.CurrentMap.listerBuildings.allBuildingsColonist.Count;
             if (visibleBuildings != lastVisibleBuildings)
             {
                 lastVisibleBuildings = visibleBuildings;
+
                 ticksToRescan = 0;
             }
 
@@ -223,7 +231,7 @@ namespace TurnOnOffRePowered
                 // If the door allows passage and isn't blocked by an object
                 if (typeof(Building_Door).IsAssignableFrom(autodoor.def.thingClass))
                 {
-                    if (((Building_Door)autodoor).Open && !((Building_Door)autodoor).BlockedOpenMomentary)
+                    if (((Building_Door) autodoor).Open && !((Building_Door) autodoor).BlockedOpenMomentary)
                     {
                         buildingsInUseThisTick.Add(autodoor);
                     }
@@ -234,26 +242,26 @@ namespace TurnOnOffRePowered
                 // ReSharper disable once InvertIf
                 if (autodoor.def.thingClass.FullName == "DoorsExpanded.Building_DoorRemote")
                 {
-                    var openState = (bool)autodoor.def.thingClass.InvokeMember(
+                    var openState = (bool) autodoor.def.thingClass.InvokeMember(
                         "Open",
                         BindingFlags.GetProperty | BindingFlags.Public | BindingFlags.Instance,
                         null,
                         autodoor,
                         null);
 
-                    var blockedOpenMomentaryState = (bool)autodoor.def.thingClass.InvokeMember(
+                    var blockedOpenMomentaryState = (bool) autodoor.def.thingClass.InvokeMember(
                         "BlockedOpenMomentary",
                         BindingFlags.GetProperty | BindingFlags.Public | BindingFlags.Instance,
                         null,
                         autodoor,
                         null);
-                    var holdOpenRemotelyState = (bool)autodoor.def.thingClass.InvokeMember(
+                    var holdOpenRemotelyState = (bool) autodoor.def.thingClass.InvokeMember(
                         "HoldOpenRemotely",
                         BindingFlags.GetProperty | BindingFlags.Public | BindingFlags.Instance,
                         null,
                         autodoor,
                         null);
-                    var ticksTillFullyOpenedState = (int)autodoor.def.thingClass.InvokeMember(
+                    var ticksTillFullyOpenedState = (int) autodoor.def.thingClass.InvokeMember(
                         "TicksTillFullyOpened",
                         BindingFlags.GetProperty | BindingFlags.Public | BindingFlags.Instance,
                         null,
@@ -520,8 +528,8 @@ namespace TurnOnOffRePowered
                 HiTechResearchBenches.UnionWith(researchTables);
 
                 var turrets = from Building turret in map.listerBuildings.allBuildingsColonist
-                              where typeof(Building_Turret).IsAssignableFrom(turret.def.thingClass)
-                              select turret;
+                    where typeof(Building_Turret).IsAssignableFrom(turret.def.thingClass)
+                    select turret;
                 foreach (var building in turrets)
                 {
                     Turrets.Add(building as Building_Turret);
@@ -692,19 +700,19 @@ namespace TurnOnOffRePowered
             }
 
             var repowerVanilla = new List<string[]>
-                                     {
-                                         new[] { "ElectricCrematorium", "200", "750", "Normal" },
-                                         new[] { "ElectricSmelter", "400", "4500", "Normal" },
-                                         new[] { "HiTechResearchBench", "100", "1000", "Normal" },
-                                         new[] { "HydroponicsBasin", "5", "75", "Special" }
+            {
+                new[] {"ElectricCrematorium", "200", "750", "Normal"},
+                new[] {"ElectricSmelter", "400", "4500", "Normal"},
+                new[] {"HiTechResearchBench", "100", "1000", "Normal"},
+                new[] {"HydroponicsBasin", "5", "75", "Special"}
 
-                                         // new string[] { "SunLamp", "0", "2900", "Special" },
-                                         // new[] { "Autodoor", "5", "500", "Special" }
-                                     };
-            var specialCases = new List<string> { "MultiAnalyzer", "VitalsMonitor", "DeepDrill" };
+                // new string[] { "SunLamp", "0", "2900", "Special" },
+                // new[] { "Autodoor", "5", "500", "Special" }
+            };
+            var specialCases = new List<string> {"MultiAnalyzer", "VitalsMonitor", "DeepDrill"};
             foreach (var tv in from tvDef in DefDatabase<ThingDef>.AllDefsListForReading
-                               where tvDef.building?.joyKind == DefDatabase<JoyKindDef>.GetNamed("Television")
-                               select tvDef)
+                where tvDef.building?.joyKind == DefDatabase<JoyKindDef>.GetNamed("Television")
+                select tvDef)
             {
                 specialCases.Add(tv.defName);
             }
@@ -720,8 +728,8 @@ namespace TurnOnOffRePowered
                 if ((from stringArray in repowerVanilla where stringArray[0] == def.defName select stringArray).Any())
                 {
                     var repowerSetting = (from stringArray in repowerVanilla
-                                          where stringArray[0] == def.defName
-                                          select stringArray).First();
+                        where stringArray[0] == def.defName
+                        select stringArray).First();
                     if (repowerSetting[3] == "Normal")
                     {
                         RegisterPowerUserBuilding(
@@ -775,7 +783,7 @@ namespace TurnOnOffRePowered
                     AutodoorDefs.Add(def);
                     RegisterSpecialPowerTrader(
                         def.defName,
-                        (int)(powerProps.basePowerConsumption / 10) * -1,
+                        (int) (powerProps.basePowerConsumption / 10) * -1,
                         powerProps.basePowerConsumption * 10 * -1);
                     continue;
                 }

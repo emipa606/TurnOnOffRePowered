@@ -1,5 +1,8 @@
 # Changelog for TurnOnOffRePowered
 
+1.0.11.0 - Fixed to work with sos2
+
+
 1.0.10.0 - French translation added, thanks qux!
 
 
