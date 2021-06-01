@@ -1,5 +1,8 @@
 # Changelog for TurnOnOffRePowered
 
+1.0.12.0 - Caching of mod-info, thanks Taranchuk
+
+
 1.0.11.0 - Fixed to work with sos2
 
 

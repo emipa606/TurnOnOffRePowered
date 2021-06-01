@@ -56,6 +56,8 @@ namespace TurnOnOffRePowered
 
         private static HashSet<ThingDef> thingDefsToLookFor;
 
+        private static bool selfLitHydroponicsIsLoaded;
+
         // ReSharper disable once CollectionNeverUpdated.Local
         private readonly HashSet<Building> scheduledBuildings = new HashSet<Building>();
 
@@ -119,6 +121,7 @@ namespace TurnOnOffRePowered
                 "verboseLogging.tooltip".Translate(),
                 false);
             rimfactoryIsLoaded = ModLister.GetActiveModWithIdentifier("spdskatr.projectrimfactory") != null;
+            selfLitHydroponicsIsLoaded = ModLister.GetActiveModWithIdentifier("Aidan.SelfLitHydroponics") != null;
             if (rimfactoryIsLoaded)
             {
                 LogMessage("Project Rimfactory is loaded");
@@ -566,7 +569,7 @@ namespace TurnOnOffRePowered
 
         private void EvalHydroponicsBasins()
         {
-            if (ModLister.GetActiveModWithIdentifier("Aidan.SelfLitHydroponics") != null)
+            if (selfLitHydroponicsIsLoaded)
             {
                 return;
             }
