@@ -50,6 +50,13 @@ Texel (RePower A16)
 	[/tr]
 [/table]
 
+![Image](https://i.imgur.com/pgjQLXV.png)
+
+Since modding is just a hobby for me I expect no donations to keep modding. If you still want to show your support you can gift me anything from my https://store.steampowered.com/wishlist/id/Mlie]Wishlist or buy me a cup of tea.
+
+https://ko-fi.com/G2G55DDYD]![Image](https://i.ibb.co/VWJJb3w/Support-Me-dark-2x.png)
+
+
 ![Image](https://i.imgur.com/Rs6T6cr.png)
 
 

@@ -797,6 +797,11 @@ namespace TurnOnOffRePowered
                     powerProps.basePowerConsumption * highPowerMultiplier * -1);
             }
 
+            if (powerLevels.ContainsKey("FM_AIManager"))
+            {
+                powerLevels.Remove("FM_AIManager");
+            }
+
             LogMessage("Initialized Components");
 
             medicalBedDef = ThingDef.Named("HospitalBed");
