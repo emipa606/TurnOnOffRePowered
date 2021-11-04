@@ -20,11 +20,11 @@ namespace TurnOnOffRePowered
             var lowString =
                 $"{"PowerNeeded".Translate()}: {TurnItOnandOff.powerLevels[__instance.def.defName][0] * -1} W";
             var lowReplacement =
-                $"{"PowerNeeded".Translate()}: {TurnItOnandOff.powerLevels[__instance.def.defName][0] * -1} W ({TurnItOnandOff.powerLevels[__instance.def.defName][1] * -1} W {"powerNeededActive".Translate()})";
+                $"{"PowerNeeded".Translate()}: {TurnItOnandOff.powerLevels[__instance.def.defName][0] * -1} {"unitOfPower".Translate()} ({TurnItOnandOff.powerLevels[__instance.def.defName][1] * -1} {"unitOfPower".Translate()} {"powerNeededActive".Translate()})";
             var highString =
                 $"{"PowerNeeded".Translate()}: {TurnItOnandOff.powerLevels[__instance.def.defName][1] * -1} W";
             var highReplacement =
-                $"{"PowerNeeded".Translate()}: {TurnItOnandOff.powerLevels[__instance.def.defName][1] * -1} W ({TurnItOnandOff.powerLevels[__instance.def.defName][0] * -1} W {"powerNeededInactive".Translate()})";
+                $"{"PowerNeeded".Translate()}: {TurnItOnandOff.powerLevels[__instance.def.defName][1] * -1} {"unitOfPower".Translate()} ({TurnItOnandOff.powerLevels[__instance.def.defName][0] * -1} {"unitOfPower".Translate()} {"powerNeededInactive".Translate()})";
             if (__result.Contains(lowReplacement) || __result.Contains(highReplacement))
             {
                 return;
