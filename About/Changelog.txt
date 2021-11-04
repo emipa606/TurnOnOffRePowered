@@ -1,5 +1,8 @@
 # Changelog for TurnOnOffRePowered
 
+1.0.15.0 - Updated Russian translation and translation-support for power-units. Via Reiquard.
+
+
 1.0.14.0 - Excluded the AI manager from Fluffys Colony Manager since its always active
 
 

@@ -1,14 +1,14 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <LanguageData>
-	<lowValue.label>Потребляемая мощность при простое, Вт </lowValue.label>
-	<lowValue.tooltip>Сколько ватт должно потребляться, когда рабочее оборудование простаивает?</lowValue.tooltip>
-	<highMultiplier.label>Множитель мощности при работе</highMultiplier.label>
-	<highMultiplier.tooltip>На сколько следует умножать потребляемую мощность, которой рабочее оборудование обладает изначально?</highMultiplier.tooltip>
-	<applyRepowerVanilla.label>Применить настройки энергопотребления модификации RePower</applyRepowerVanilla.label>
-	<applyRepowerVanilla.tooltip>В модификации RePower были значения по умолчанию для:\n - высокотехнологичного стола для исследований,\n - электроплавильни,\n - электрического крематория,\nчто увеличивало верхние и нижние значения энергопотребления этого оборудования вне зависимости от вышеуказанных настроек.</applyRepowerVanilla.tooltip>
-	<verboseLogging.label>Подробный журнал</verboseLogging.label>
-	<verboseLogging.tooltip>Показывать при запуске в журнале все уровни мощности</verboseLogging.tooltip>
-	<powerNeededActive>при работе</powerNeededActive>
-	<powerNeededInactive>при простое</powerNeededInactive>
-	<unitOfPower>Вт</unitOfPower>
+  <lowValue.label>Потребляемая мощность при простое, Вт </lowValue.label>
+  <lowValue.tooltip>Сколько ватт должно потребляться, когда рабочее оборудование простаивает?</lowValue.tooltip>
+  <highMultiplier.label>Множитель мощности при работе</highMultiplier.label>
+  <highMultiplier.tooltip>На сколько следует умножать потребляемую мощность, которой рабочее оборудование обладает изначально?</highMultiplier.tooltip>
+  <applyRepowerVanilla.label>Применить настройки энергопотребления модификации RePower</applyRepowerVanilla.label>
+  <applyRepowerVanilla.tooltip>В модификации RePower были значения по умолчанию для:\n - высокотехнологичного стола для исследований,\n - электроплавильни,\n - электрического крематория,\nчто увеличивало верхние и нижние значения энергопотребления этого оборудования вне зависимости от вышеуказанных настроек.</applyRepowerVanilla.tooltip>
+  <verboseLogging.label>Подробный журнал</verboseLogging.label>
+  <verboseLogging.tooltip>Показывать при запуске в журнале все уровни мощности</verboseLogging.tooltip>
+  <powerNeededActive>при работе</powerNeededActive>
+  <powerNeededInactive>при простое</powerNeededInactive>
+  <unitOfPower>Вт</unitOfPower>
 </LanguageData>

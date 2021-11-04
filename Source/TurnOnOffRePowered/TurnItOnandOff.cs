@@ -234,7 +234,7 @@ namespace TurnOnOffRePowered
                 // If the door allows passage and isn't blocked by an object
                 if (typeof(Building_Door).IsAssignableFrom(autodoor.def.thingClass))
                 {
-                    if (((Building_Door) autodoor).Open && !((Building_Door) autodoor).BlockedOpenMomentary)
+                    if (((Building_Door)autodoor).Open && !((Building_Door)autodoor).BlockedOpenMomentary)
                     {
                         buildingsInUseThisTick.Add(autodoor);
                     }
@@ -245,26 +245,26 @@ namespace TurnOnOffRePowered
                 // ReSharper disable once InvertIf
                 if (autodoor.def.thingClass.FullName == "DoorsExpanded.Building_DoorRemote")
                 {
-                    var openState = (bool) autodoor.def.thingClass.InvokeMember(
+                    var openState = (bool)autodoor.def.thingClass.InvokeMember(
                         "Open",
                         BindingFlags.GetProperty | BindingFlags.Public | BindingFlags.Instance,
                         null,
                         autodoor,
                         null);
 
-                    var blockedOpenMomentaryState = (bool) autodoor.def.thingClass.InvokeMember(
+                    var blockedOpenMomentaryState = (bool)autodoor.def.thingClass.InvokeMember(
                         "BlockedOpenMomentary",
                         BindingFlags.GetProperty | BindingFlags.Public | BindingFlags.Instance,
                         null,
                         autodoor,
                         null);
-                    var holdOpenRemotelyState = (bool) autodoor.def.thingClass.InvokeMember(
+                    var holdOpenRemotelyState = (bool)autodoor.def.thingClass.InvokeMember(
                         "HoldOpenRemotely",
                         BindingFlags.GetProperty | BindingFlags.Public | BindingFlags.Instance,
                         null,
                         autodoor,
                         null);
-                    var ticksTillFullyOpenedState = (int) autodoor.def.thingClass.InvokeMember(
+                    var ticksTillFullyOpenedState = (int)autodoor.def.thingClass.InvokeMember(
                         "TicksTillFullyOpened",
                         BindingFlags.GetProperty | BindingFlags.Public | BindingFlags.Instance,
                         null,
@@ -704,15 +704,15 @@ namespace TurnOnOffRePowered
 
             var repowerVanilla = new List<string[]>
             {
-                new[] {"ElectricCrematorium", "200", "750", "Normal"},
-                new[] {"ElectricSmelter", "400", "4500", "Normal"},
-                new[] {"HiTechResearchBench", "100", "1000", "Normal"},
-                new[] {"HydroponicsBasin", "5", "75", "Special"}
+                new[] { "ElectricCrematorium", "200", "750", "Normal" },
+                new[] { "ElectricSmelter", "400", "4500", "Normal" },
+                new[] { "HiTechResearchBench", "100", "1000", "Normal" },
+                new[] { "HydroponicsBasin", "5", "75", "Special" }
 
                 // new string[] { "SunLamp", "0", "2900", "Special" },
                 // new[] { "Autodoor", "5", "500", "Special" }
             };
-            var specialCases = new List<string> {"MultiAnalyzer", "VitalsMonitor", "DeepDrill"};
+            var specialCases = new List<string> { "MultiAnalyzer", "VitalsMonitor", "DeepDrill" };
             foreach (var tv in from tvDef in DefDatabase<ThingDef>.AllDefsListForReading
                 where tvDef.building?.joyKind == DefDatabase<JoyKindDef>.GetNamed("Television")
                 select tvDef)
@@ -786,7 +786,7 @@ namespace TurnOnOffRePowered
                     AutodoorDefs.Add(def);
                     RegisterSpecialPowerTrader(
                         def.defName,
-                        (int) (powerProps.basePowerConsumption / 10) * -1,
+                        (int)(powerProps.basePowerConsumption / 10) * -1,
                         powerProps.basePowerConsumption * 10 * -1);
                     continue;
                 }
