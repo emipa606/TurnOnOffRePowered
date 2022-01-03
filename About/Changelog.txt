@@ -1,5 +1,8 @@
 # Changelog for TurnOnOffRePowered
 
+1.3.1 - Added support for all buildings that uses the Scanner-comp. In vanilla for example the deep mineral scanner and the long range scanner
+
+
 1.0.15.0 - Updated Russian translation and translation-support for power-units. Via Reiquard.
 
 

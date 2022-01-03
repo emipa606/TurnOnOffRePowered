@@ -2,16 +2,15 @@
 using HarmonyLib;
 using RimWorld;
 
-namespace TurnOnOffRePowered
+namespace TurnOnOffRePowered;
+
+// Track the power users
+[HarmonyPatch(typeof(Building_WorkTable), "UsedThisTick", new Type[] { })]
+public static class Building_WorkTable_UsedThisTick_Patch
 {
-    // Track the power users
-    [HarmonyPatch(typeof(Building_WorkTable), "UsedThisTick", new Type[] { })]
-    public static class Building_WorkTable_UsedThisTick_Patch
+    [HarmonyPrefix]
+    public static void UsedThisTick(Building_WorkTable __instance)
     {
-        [HarmonyPrefix]
-        public static void UsedThisTick(Building_WorkTable __instance)
-        {
-            TurnItOnandOff.AddBuildingUsed(__instance);
-        }
+        TurnItOnandOff.AddBuildingUsed(__instance);
     }
 }

@@ -28,6 +28,7 @@ Its safe to add and remove from saves, and should not affect performance any mor
 - Added support for https://steamcommunity.com/sharedfiles/filedetails/?id=2195733555]Doors Expanded
 - Added support for https://steamcommunity.com/sharedfiles/filedetails/?id=2033979700]Project RimFactory Revived
 - French translation added, thanks qux!
+- Russian translation added, thanks Reiquard!
 
 If you want, you can use this along with my patch-pack for RePower:
 https://steamcommunity.com/sharedfiles/filedetails/?id=1836577627
@@ -45,7 +46,7 @@ Texel (RePower A16)
 
 Since modding is just a hobby for me I expect no donations to keep modding. If you still want to show your support you can gift me anything from my https://store.steampowered.com/wishlist/id/Mlie]Wishlist or buy me a cup of tea.
 
-https://ko-fi.com/G2G55DDYD]![Image](https://i.ibb.co/VWJJb3w/Support-Me-dark-2x.png)
+https://ko-fi.com/G2G55DDYD]![Image](https://i.imgur.com/Utx6OIH.png)
 
 
 ![Image](https://i.imgur.com/PwoNOj4.png)
