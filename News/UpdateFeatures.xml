@@ -1,10 +1,10 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Defs>
-  <HugsLib.UpdateFeatureDef Abstract="true" Name="UpdateFeatureBase">
+  <HugsLib.UpdateFeatureDef Abstract="true" Name="TurnOnOffRePowered_UpdateFeatureBase">
     <modNameReadable>TurnOnOffRePowered</modNameReadable>
     <linkUrl>https://steamcommunity.com/sharedfiles/filedetails/?id=2228219259</linkUrl>
   </HugsLib.UpdateFeatureDef>
-  <HugsLib.UpdateFeatureDef ParentName="UpdateFeatureBase">
+  <HugsLib.UpdateFeatureDef ParentName="TurnOnOffRePowered_UpdateFeatureBase">
     <defName>TurnOnOffRePowered_1_0_3_0</defName>
     <assemblyVersion>1.0.3.0</assemblyVersion>
     <content>There is an added option in the settings now for applying the default settings in the RePower-mod.
@@ -13,7 +13,7 @@ These included the Crematorium, High-Tech research bench and the smelter and def
 You can now disable this behaviour in the settings if needed.
 </content>
   </HugsLib.UpdateFeatureDef>
-  <HugsLib.UpdateFeatureDef ParentName="UpdateFeatureBase">
+  <HugsLib.UpdateFeatureDef ParentName="TurnOnOffRePowered_UpdateFeatureBase">
     <defName>TurnOnOffRePowered_1_0_7_0</defName>
     <assemblyVersion>1.0.7.0</assemblyVersion>
     <content>Got a question about support for Turrets so I decided to add that. Any turret that uses the base-class Building_Turret should be supported. If there are others that dont seem to get the power-change, please leave a link to the mod the turret is from and Ill see if I can add it.
