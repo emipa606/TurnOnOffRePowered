@@ -67,6 +67,8 @@ public class TurnItOnandOff : ModBase
 
     private SettingHandle<bool> applyRepowerVanilla;
 
+    private SettingHandle<float> doorMultiplier;
+
     private SettingHandle<float> highMultiplier;
 
     private int lastVisibleBuildings;
@@ -111,6 +113,12 @@ public class TurnItOnandOff : ModBase
             "highMultiplier.label".Translate(),
             "highMultiplier.tooltip".Translate(),
             2.5f,
+            Validators.FloatRangeValidator(0.1f, 10f));
+        doorMultiplier = Settings.GetHandle(
+            "doorMultiplier",
+            "doorMultiplier.label".Translate(),
+            "doorMultiplier.tooltip".Translate(),
+            10f,
             Validators.FloatRangeValidator(0.1f, 10f));
         applyRepowerVanilla = Settings.GetHandle(
             "applyRepowerVanilla",
@@ -684,7 +692,7 @@ public class TurnItOnandOff : ModBase
 
     private void LogMessage(string Message)
     {
-        if (verboseLogging == null || !verboseLogging.Value)
+        if (verboseLogging is not { Value: true })
         {
             return;
         }
@@ -729,6 +737,20 @@ public class TurnItOnandOff : ModBase
         if (highMultiplier != null)
         {
             highPowerMultiplier = highMultiplier.Value;
+            if (highPowerMultiplier <= 0)
+            {
+                highPowerMultiplier = 0.001f;
+            }
+        }
+
+        var doorPowerMultiplier = 10f;
+        if (doorMultiplier != null)
+        {
+            doorPowerMultiplier = doorMultiplier.Value;
+            if (doorPowerMultiplier <= 0)
+            {
+                doorPowerMultiplier = 0.001f;
+            }
         }
 
         var repowerVanilla = new List<string[]>
@@ -817,8 +839,8 @@ public class TurnItOnandOff : ModBase
                 AutodoorDefs.Add(def);
                 RegisterSpecialPowerTrader(
                     def.defName,
-                    (int)(powerProps.basePowerConsumption / 10) * -1,
-                    powerProps.basePowerConsumption * 10 * -1);
+                    lowPower,
+                    powerProps.basePowerConsumption * doorPowerMultiplier * -1);
                 continue;
             }
 

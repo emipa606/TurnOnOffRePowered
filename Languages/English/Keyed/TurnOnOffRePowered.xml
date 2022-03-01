@@ -5,6 +5,8 @@
   <lowValue.tooltip>How many Watts should be consumed when the building is idle?</lowValue.tooltip>
   <highMultiplier.label>Power multiplier when in use</highMultiplier.label>
   <highMultiplier.tooltip>How much should the original powerdraw be multiplied with?</highMultiplier.tooltip>
+  <doorMultiplier.label>Power multiplier for autodoors</doorMultiplier.label>
+  <doorMultiplier.tooltip>How much should the original powerdraw be multiplied with when in use (opening/closing)?</doorMultiplier.tooltip>
   <applyRepowerVanilla.label>Apply built-in power-settings from the original RePower-mod</applyRepowerVanilla.label>
   <verboseLogging.label>Verbose logging</verboseLogging.label>
   <verboseLogging.tooltip>Will show all powerlevels in the log at startup</verboseLogging.tooltip>
