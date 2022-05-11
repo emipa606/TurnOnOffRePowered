@@ -245,7 +245,15 @@ public class TurnItOnandOff : ModBase
             // If the door allows passage and isn't blocked by an object
             if (typeof(Building_Door).IsAssignableFrom(autodoor.def.thingClass))
             {
-                if (((Building_Door)autodoor).Open && !((Building_Door)autodoor).BlockedOpenMomentary)
+                var canTryCloseAutomatically = (bool)autodoor.def.thingClass.InvokeMember(
+                    "CanTryCloseAutomatically",
+                    BindingFlags.GetProperty | BindingFlags.NonPublic | BindingFlags.Instance,
+                    null,
+                    autodoor,
+                    null);
+                if (((Building_Door)autodoor).Open && !((Building_Door)autodoor).BlockedOpenMomentary &&
+                    (!((Building_Door)autodoor).HoldOpen && canTryCloseAutomatically ||
+                     ((Building_Door)autodoor).TicksTillFullyOpened > 0))
                 {
                     buildingsInUseThisTick.Add(autodoor);
                 }
