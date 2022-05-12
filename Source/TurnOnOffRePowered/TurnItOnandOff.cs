@@ -245,7 +245,32 @@ public class TurnItOnandOff : ModBase
             // If the door allows passage and isn't blocked by an object
             if (typeof(Building_Door).IsAssignableFrom(autodoor.def.thingClass))
             {
-                var canTryCloseAutomatically = (bool)autodoor.def.thingClass.InvokeMember(
+                var classToCheck = autodoor.def.thingClass;
+                if (classToCheck == null)
+                {
+                    continue;
+                }
+
+                var memberFound = classToCheck.GetMember("CanTryCloseAutomatically",
+                    BindingFlags.GetProperty | BindingFlags.NonPublic | BindingFlags.Instance);
+                while (!memberFound.Any())
+                {
+                    classToCheck = classToCheck.BaseType;
+                    if (classToCheck == null)
+                    {
+                        break;
+                    }
+
+                    memberFound = classToCheck.GetMember("CanTryCloseAutomatically",
+                        BindingFlags.GetProperty | BindingFlags.NonPublic | BindingFlags.Instance);
+                }
+
+                if (classToCheck == null || !memberFound.Any())
+                {
+                    continue;
+                }
+
+                var canTryCloseAutomatically = (bool)classToCheck.InvokeMember(
                     "CanTryCloseAutomatically",
                     BindingFlags.GetProperty | BindingFlags.NonPublic | BindingFlags.Instance,
                     null,
