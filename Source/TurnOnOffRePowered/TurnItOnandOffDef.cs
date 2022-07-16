@@ -1,17 +1,16 @@
 ﻿using Verse;
 
-namespace TurnOnOffRePowered
+namespace TurnOnOffRePowered;
+
+public class TurnItOnandOffDef : Def
 {
-    public class TurnItOnandOffDef : Def
-    {
-        public int highPower;
+    public int highPower;
 
-        public int lowPower;
+    public int lowPower;
 
-        public bool poweredReservable;
+    public bool poweredReservable;
 
-        public bool poweredWorkbench;
+    public bool poweredWorkbench;
 
-        public string targetDef;
-    }
+    public string targetDef;
 }

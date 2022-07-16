@@ -8,6 +8,7 @@ using RePower;
 using RimWorld;
 using UnityEngine;
 using Verse;
+using Verse.AI;
 
 namespace TurnOnOffRePowered;
 
@@ -48,7 +49,7 @@ public class TurnItOnandOff : ModBase
 
     private static ThingDef HydroponicsBasinDef;
 
-    private static TurnItOnandOff instance;
+    public static TurnItOnandOff instance;
 
     private static int inUseTick;
 
@@ -66,6 +67,8 @@ public class TurnItOnandOff : ModBase
     private readonly HashSet<ThingDef> ScheduledBuildingsDefs = new HashSet<ThingDef>();
 
     private SettingHandle<bool> applyRepowerVanilla;
+
+    public SettingHandle<bool> blockUseWhenLowPower;
 
     private SettingHandle<float> doorMultiplier;
 
@@ -96,7 +99,7 @@ public class TurnItOnandOff : ModBase
         }
 
         var inUse = buildingsThatWereUsedLastTick.Contains(building);
-        instance.LogMessage($"{building.ThingID} ({defName}) power adjusted");
+        LogMessage($"{building.ThingID} ({defName}) power adjusted");
         return powerLevels[defName][inUse ? 1 : 0];
     }
 
@@ -124,6 +127,11 @@ public class TurnItOnandOff : ModBase
             "applyRepowerVanilla",
             "applyRepowerVanilla.label".Translate(),
             "applyRepowerVanilla.tooltip".Translate(),
+            true);
+        blockUseWhenLowPower = Settings.GetHandle(
+            "blockUseWhenLowPower",
+            "blockUseWhenLowPower.label".Translate(),
+            "blockUseWhenLowPower.tooltip".Translate(),
             true);
         verboseLogging = Settings.GetHandle(
             "verboseLogging",
@@ -470,11 +478,11 @@ public class TurnItOnandOff : ModBase
 
             if (defName == null)
             {
-                instance.LogMessage("Defname could not be found, it's respective mod probably isn't loaded");
+                LogMessage("Defname could not be found, it's respective mod probably isn't loaded");
                 return;
             }
 
-            instance.LogMessage($"Attempting to register def named {defName}");
+            LogMessage($"Attempting to register def named {defName}");
 
             RegisterPowerUserBuilding(defName, lowPower, highPower);
             buildingDefsReservable.Add(def);
@@ -487,7 +495,7 @@ public class TurnItOnandOff : ModBase
 
     private static void RegisterPowerUserBuilding(string defName, float idlePower, float activePower)
     {
-        instance.LogMessage(
+        LogMessage(
             $"adding {DefDatabase<ThingDef>.GetNamedSilentFail(defName).label.CapitalizeFirst()}, low: {idlePower}, high: {activePower}");
 
         powerLevels.Add(defName, new Vector2(idlePower, activePower));
@@ -500,7 +508,7 @@ public class TurnItOnandOff : ModBase
             return;
         }
 
-        instance.LogMessage(
+        LogMessage(
             $"adding special {DefDatabase<ThingDef>.GetNamedSilentFail(defName).label.CapitalizeFirst()}, low: {idlePower}, high: {activePower}");
 
         powerLevels.Add(defName, new Vector2(idlePower, activePower));
@@ -723,9 +731,9 @@ public class TurnItOnandOff : ModBase
         return false;
     }
 
-    private void LogMessage(string Message)
+    public static void LogMessage(string Message)
     {
-        if (verboseLogging is not { Value: true })
+        if (instance.verboseLogging is not { Value: true })
         {
             return;
         }
@@ -957,5 +965,58 @@ public class TurnItOnandOff : ModBase
                 RegisterExternalReservable(namedDef.defName, def.lowPower, def.highPower);
             }
         }
+    }
+
+    public static bool HasEnoughPower(Building_WorkTable table)
+    {
+        if (!instance.blockUseWhenLowPower)
+        {
+            return true;
+        }
+
+        if (!powerLevels.ContainsKey(table.def.defName))
+        {
+            return true;
+        }
+
+        if (table.CanWorkWithoutPower)
+        {
+            return true;
+        }
+
+        if (buildingsThatWereUsedLastTick.Contains(table))
+        {
+            return true;
+        }
+
+        var powerTrader = table.GetComp<CompPowerTrader>();
+
+        if (powerTrader?.PowerNet == null)
+        {
+            return true;
+        }
+
+        var currentPowerNeed = powerLevels[table.def.defName][1] * -1;
+        var currentGainRate = powerTrader.PowerNet.CurrentEnergyGainRate() / CompPower.WattsToWattDaysPerTick;
+        var currentSavedEnergy = powerTrader.PowerNet.CurrentStoredEnergy() / CompPower.WattsToWattDaysPerTick;
+
+        if (currentGainRate >= currentPowerNeed)
+        {
+            LogMessage(
+                $"Enough power: {table.def.label} requires {currentPowerNeed}, current gainrate: {currentGainRate}");
+            return true;
+        }
+
+        if (currentSavedEnergy > currentPowerNeed * 500)
+        {
+            LogMessage(
+                $"Enough power: {table.def.label} requires {currentPowerNeed * 500} saved, current saved power: {currentSavedEnergy}");
+            return true;
+        }
+
+        LogMessage(
+            $"Not enough power: {table.def.label} requires {currentPowerNeed} gaining or {currentPowerNeed * 500} saved, current saved power: {currentSavedEnergy}, current gainrate: {currentGainRate}");
+        JobFailReason.Is("notEnoughPower.failreason".Translate(currentPowerNeed, "unitOfPower".Translate()));
+        return false;
     }
 }

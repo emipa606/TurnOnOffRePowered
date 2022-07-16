@@ -7,11 +7,14 @@
   <highMultiplier.tooltip>How much should the original powerdraw be multiplied with?</highMultiplier.tooltip>
   <doorMultiplier.label>Power multiplier for autodoors</doorMultiplier.label>
   <doorMultiplier.tooltip>How much should the original powerdraw be multiplied with when in use (opening/closing)?</doorMultiplier.tooltip>
-  <applyRepowerVanilla.label>Apply built-in power-settings from the original RePower-mod</applyRepowerVanilla.label>
   <verboseLogging.label>Verbose logging</verboseLogging.label>
   <verboseLogging.tooltip>Will show all powerlevels in the log at startup</verboseLogging.tooltip>
-  <applyRepowerVanilla.tooltip>The RePower-mod had default values for the Crematorium, Smelter and the High-Tech Research Bench, increasing the high and low value for these buildnings independent of the above settigns.</applyRepowerVanilla.tooltip>
+  <blockUseWhenLowPower.label>Block use on low power</blockUseWhenLowPower.label>
+  <blockUseWhenLowPower.tooltip>Will block the use of workbenches if the power generation is too low to support it and there is not enough saved electricity.</blockUseWhenLowPower.tooltip>
+  <applyRepowerVanilla.label>Apply built-in power-settings from the original RePower-mod</applyRepowerVanilla.label>
+  <applyRepowerVanilla.tooltip>The RePower-mod had default values for the Crematorium, Smelter and the High-Tech Research Bench, increasing the high and low value for these buildnings independent of the above settings.</applyRepowerVanilla.tooltip>
   <powerNeededActive>active</powerNeededActive>
   <powerNeededInactive>inactive</powerNeededInactive>
   <unitOfPower>W</unitOfPower>
+  <notEnoughPower.failreason>There is not enough power available (needs {0}{1})</notEnoughPower.failreason>
 </LanguageData>

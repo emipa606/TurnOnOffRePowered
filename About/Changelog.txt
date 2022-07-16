@@ -1,5 +1,8 @@
 # Changelog for TurnOnOffRePowered
 
+1.3.6 - Added setting for blocking work if power is low
+
+
 1.3.5 - Fix for the autodoor change that caused issues in SOS2
 
 

@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <Defs>
   <HugsLib.UpdateFeatureDef Abstract="true" Name="TurnOnOffRePowered_UpdateFeatureBase">
     <modNameReadable>TurnOnOffRePowered</modNameReadable>
@@ -21,4 +21,11 @@ You can now disable this behaviour in the settings if needed.
 Turrets will draw the high power-load when they have an active target.
 </content>
   </HugsLib.UpdateFeatureDef>
+	<HugsLib.UpdateFeatureDef ParentName="TurnOnOffRePowered_UpdateFeatureBase">
+		<defName>TurnOnOffRePowered_1_3_6</defName>
+		<assemblyVersion>1.3.6</assemblyVersion>
+		<content>The mod now has an option (default on) that blocks workbenches if they would not have enough power when in use.
+So if the power-generation is not higher than what the bench would use and there not enough power in connected batteries, no bill will be done.
+This will stop the issue when a pawn tries to cook a meal, instantly draining the batteries, aborting the job, then trying again as some power has returned to the batteries.</content>
+	</HugsLib.UpdateFeatureDef>
 </Defs>
