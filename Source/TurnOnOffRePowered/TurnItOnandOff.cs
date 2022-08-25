@@ -16,6 +16,8 @@ public class TurnItOnandOff : ModBase
 {
     public static readonly HashSet<Building> buildingsToModifyPowerOn = new HashSet<Building>();
 
+    public static readonly List<string> AlwaysIgnored = new List<string> { "Furnace" };
+
     // Power levels pairs as Vector2's, X = Idling, Y = In Use
     public static Dictionary<string, Vector2> powerLevels = new Dictionary<string, Vector2>();
 
@@ -818,7 +820,8 @@ public class TurnItOnandOff : ModBase
             specialCases.Add("HiTechResearchBench");
         }
 
-        foreach (var def in DefDatabase<ThingDef>.AllDefsListForReading)
+        foreach (var def in DefDatabase<ThingDef>.AllDefsListForReading.Where(def =>
+                     !AlwaysIgnored.Contains(def.defName)))
         {
             if ((from stringArray in repowerVanilla where stringArray[0] == def.defName select stringArray).Any())
             {

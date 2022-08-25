@@ -1,6 +1,5 @@
 ﻿using Verse;
 
-// ReSharper disable once CheckNamespace
 namespace RePower;
 
 public class RePowerDef : Def
