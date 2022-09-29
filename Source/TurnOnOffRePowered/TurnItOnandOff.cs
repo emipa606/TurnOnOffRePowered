@@ -35,6 +35,8 @@ public class TurnItOnandOff : ModBase
 
     private static readonly HashSet<Building> Scanners = new HashSet<Building>();
 
+    private static readonly HashSet<Building> RimfactoryBuildings = new HashSet<Building>();
+
     private static readonly HashSet<Building> HiTechResearchBenches = new HashSet<Building>();
 
     private static readonly HashSet<Building> HydroponcsBasins = new HashSet<Building>();
@@ -58,6 +60,8 @@ public class TurnItOnandOff : ModBase
     private static ThingDef medicalBedDef;
 
     private static bool rimfactoryIsLoaded;
+
+    private static List<ThingDef> rimfactoryAssemblerDefs;
 
     private static HashSet<ThingDef> thingDefsToLookFor;
 
@@ -142,9 +146,12 @@ public class TurnItOnandOff : ModBase
             false);
         rimfactoryIsLoaded = ModLister.GetActiveModWithIdentifier("spdskatr.projectrimfactory") != null;
         selfLitHydroponicsIsLoaded = ModLister.GetActiveModWithIdentifier("Aidan.SelfLitHydroponics") != null;
+        rimfactoryAssemblerDefs = new List<ThingDef>();
         if (rimfactoryIsLoaded)
         {
             LogMessage("Project Rimfactory is loaded");
+            rimfactoryAssemblerDefs = DefDatabase<ThingDef>.AllDefsListForReading.Where(def =>
+                def.defName.StartsWith("PRF_") && def.thingClass.Name.EndsWith("Assembler")).ToList();
         }
 
         UpdateDefinitions();
@@ -440,6 +447,31 @@ public class TurnItOnandOff : ModBase
             return;
         }
 
+        foreach (var rimfactoryBuilding in RimfactoryBuildings)
+        {
+            if (rimfactoryBuilding?.Map == null)
+            {
+                continue;
+            }
+
+            if (buildingsInUseThisTick.Contains(rimfactoryBuilding))
+            {
+                continue;
+            }
+
+            var inspectStringSplitted = rimfactoryBuilding.GetInspectString().Split('\n');
+            foreach (var row in inspectStringSplitted)
+            {
+                if (!row.Contains("(") || row.Contains("W"))
+                {
+                    continue;
+                }
+
+                buildingsInUseThisTick.Add(rimfactoryBuilding);
+                break;
+            }
+        }
+
         foreach (var building in buildingsToModifyPowerOn)
         {
             // Cache misses
@@ -593,6 +625,20 @@ public class TurnItOnandOff : ModBase
                 }
             }
 
+            if (rimfactoryIsLoaded)
+            {
+                foreach (var def in rimfactoryAssemblerDefs)
+                {
+                    var rimfactoryBuildings = map.listerBuildings.AllBuildingsColonistOfDef(def);
+
+                    // Merge in all matching things
+                    foreach (var building in rimfactoryBuildings)
+                    {
+                        RimfactoryBuildings.Add(building);
+                    }
+                }
+            }
+
             // Register the medical beds in the watch list
             var mediBeds = map.listerBuildings.AllBuildingsColonistOfDef(medicalBedDef);
             foreach (var mediBed in mediBeds)
@@ -638,6 +684,7 @@ public class TurnItOnandOff : ModBase
         MedicalBeds.Clear();
         HiTechResearchBenches.Clear();
         Autodoors.Clear();
+        RimfactoryBuildings.Clear();
         DeepDrills.Clear();
         Scanners.Clear();
         HydroponcsBasins.Clear();
@@ -871,7 +918,8 @@ public class TurnItOnandOff : ModBase
             if (!typeof(Building_WorkTable).IsAssignableFrom(def.thingClass)
                 && !typeof(Building_Turret).IsAssignableFrom(def.thingClass)
                 && !IsDoorType(def)
-                && !def.comps.Any(comp => comp.GetType().IsSubclassOf(typeof(CompProperties_Scanner))))
+                && !def.comps.Any(comp => comp.GetType().IsSubclassOf(typeof(CompProperties_Scanner)))
+                && !rimfactoryAssemblerDefs.Contains(def))
             {
                 //LogMessage(
                 //    $"{def.defName} with thingClass {def.thingClass} is not Building_WorkTable/Building_Turret/Building_Door/Scanner");
