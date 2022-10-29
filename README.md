@@ -26,7 +26,7 @@ Its safe to add and remove from saves, and should not affect performance any mor
 - Added support for turrets, turrets that use the Building_Turret class will now draw high-power when having an active target.
 - Added support for all autodoors that use the vanilla door-class
 - Added support for https://steamcommunity.com/sharedfiles/filedetails/?id=2195733555]Doors Expanded
-- Added support for https://steamcommunity.com/sharedfiles/filedetails/?id=2033979700]Project RimFactory Revived
+- Added support for https://steamcommunity.com/sharedfiles/filedetails/?id=2033979700]Project RimFactory Revived, both the workbenches and the automatic assemblers.
 - Added setting for blocking work if power is low, all workbenches that inherits the vanilla class should now block usage if there is not enough power stored or being generated.
 - French translation added, thanks qux!
 - Russian translation added, thanks Reiquard!

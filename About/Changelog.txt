@@ -1,5 +1,9 @@
 # Changelog for TurnOnOffRePowered
 
+1.4.1 - Mod updated for 1.4 and passed autotests.
+Used DeepL to update translations for ChineseSimplified, German
+
+
 1.3.8 - Added support for the automatic assemblers in RimFactory
 
 
