@@ -689,7 +689,7 @@ public class TurnItOnandOff : ModBase
                 var thingsOnTile = basin.Map.thingGrid.ThingsListAt(tile);
                 foreach (var thing in thingsOnTile)
                 {
-                    if (!(thing is Plant))
+                    if (thing is not Plant)
                     {
                         continue;
                     }
@@ -748,12 +748,7 @@ public class TurnItOnandOff : ModBase
             return true;
         }
 
-        if (def.thingClass.FullName == "DoorsExpanded.Building_DoorRemote")
-        {
-            return true;
-        }
-
-        return false;
+        return def.thingClass.FullName == "DoorsExpanded.Building_DoorRemote";
     }
 
     public static void LogMessage(string Message)
