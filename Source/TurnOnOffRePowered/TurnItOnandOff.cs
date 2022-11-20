@@ -260,7 +260,7 @@ public class TurnItOnandOff : ModBase
             }
 
             // If the door allows passage and isn't blocked by an object
-            if (typeof(Building_Door).IsAssignableFrom(autodoor.def.thingClass))
+            if (autodoor is Building_Door buildingDoor)
             {
                 var classToCheck = autodoor.def.thingClass;
                 if (classToCheck == null)
@@ -268,34 +268,10 @@ public class TurnItOnandOff : ModBase
                     continue;
                 }
 
-                var memberFound = classToCheck.GetMember("CanTryCloseAutomatically",
-                    BindingFlags.GetProperty | BindingFlags.NonPublic | BindingFlags.Instance);
-                while (!memberFound.Any())
-                {
-                    classToCheck = classToCheck.BaseType;
-                    if (classToCheck == null)
-                    {
-                        break;
-                    }
-
-                    memberFound = classToCheck.GetMember("CanTryCloseAutomatically",
-                        BindingFlags.GetProperty | BindingFlags.NonPublic | BindingFlags.Instance);
-                }
-
-                if (classToCheck == null || !memberFound.Any())
-                {
-                    continue;
-                }
-
-                var canTryCloseAutomatically = (bool)classToCheck.InvokeMember(
-                    "CanTryCloseAutomatically",
-                    BindingFlags.GetProperty | BindingFlags.NonPublic | BindingFlags.Instance,
-                    null,
-                    autodoor,
-                    null);
-                if (((Building_Door)autodoor).Open && !((Building_Door)autodoor).BlockedOpenMomentary &&
-                    (!((Building_Door)autodoor).HoldOpen && canTryCloseAutomatically ||
-                     ((Building_Door)autodoor).TicksTillFullyOpened > 0))
+                var canTryCloseAutomatically = buildingDoor.CanTryCloseAutomatically;
+                if (buildingDoor.Open && !buildingDoor.BlockedOpenMomentary &&
+                    (!buildingDoor.HoldOpen && canTryCloseAutomatically ||
+                     buildingDoor.TicksTillFullyOpened > 0))
                 {
                     buildingsInUseThisTick.Add(autodoor);
                 }
