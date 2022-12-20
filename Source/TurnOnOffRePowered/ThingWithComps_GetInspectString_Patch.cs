@@ -1,35 +1,28 @@
-﻿using System;
-using System.Linq;
+﻿using System.Linq;
+using System.Text.RegularExpressions;
 using HarmonyLib;
+using RimWorld;
 using Verse;
 
 namespace TurnOnOffRePowered;
 
-[HarmonyPatch(typeof(ThingWithComps), "GetInspectString", new Type[] { })]
-public static class ThingWithComps_GetInspectString_Patch
+[HarmonyPatch(typeof(CompPowerTrader), "CompInspectStringExtra")]
+public static class CompPowerTrader_CompInspectStringExtra_Patch
 {
     [HarmonyPostfix]
-    public static void AddRequiredText(ThingWithComps __instance, ref string __result)
+    public static void AddRequiredText(CompPowerTrader __instance, ref string __result)
     {
-        if (!TurnItOnandOff.buildingsToModifyPowerOn.Contains(__instance)
-            || !TurnItOnandOff.powerLevels.ContainsKey(__instance.def.defName))
+        var parent = __instance.parent;
+        if (!TurnItOnandOff.buildingsToModifyPowerOn.Contains(parent)
+            || !TurnItOnandOff.powerLevels.ContainsKey(parent.def.defName))
         {
             return;
         }
 
-        var lowString =
-            $"{"PowerNeeded".Translate()}: {TurnItOnandOff.powerLevels[__instance.def.defName][0] * -1} W";
-        var lowReplacement =
-            $"{"PowerNeeded".Translate()}: {TurnItOnandOff.powerLevels[__instance.def.defName][0] * -1} {"unitOfPower".Translate()} ({TurnItOnandOff.powerLevels[__instance.def.defName][1] * -1} {"unitOfPower".Translate()} {"powerNeededActive".Translate()})";
-        var highString =
-            $"{"PowerNeeded".Translate()}: {TurnItOnandOff.powerLevels[__instance.def.defName][1] * -1} W";
-        var highReplacement =
-            $"{"PowerNeeded".Translate()}: {TurnItOnandOff.powerLevels[__instance.def.defName][1] * -1} {"unitOfPower".Translate()} ({TurnItOnandOff.powerLevels[__instance.def.defName][0] * -1} {"unitOfPower".Translate()} {"powerNeededInactive".Translate()})";
-        if (__result.Contains(lowReplacement) || __result.Contains(highReplacement))
-        {
-            return;
-        }
-
-        __result = __result.Replace(lowString, lowReplacement).Replace(highString, highReplacement);
+        var newString = TurnItOnandOff.buildingsThatWereUsedLastTick.Contains(parent)
+            ? $"{"PowerNeeded".Translate()}: {TurnItOnandOff.powerLevels[parent.def.defName][1] * -1} {"unitOfPower".Translate()} ({TurnItOnandOff.powerLevels[parent.def.defName][0] * -1} {"unitOfPower".Translate()} {"powerNeededInactive".Translate()})\n"
+            : $"{"PowerNeeded".Translate()}: {TurnItOnandOff.powerLevels[parent.def.defName][0] * -1} {"unitOfPower".Translate()} ({TurnItOnandOff.powerLevels[parent.def.defName][1] * -1} {"unitOfPower".Translate()} {"powerNeededActive".Translate()})\n";
+        var pattern = $"{"PowerNeeded".Translate()}.*\\n";
+        __result = Regex.Replace(__result, pattern, newString);
     }
 }

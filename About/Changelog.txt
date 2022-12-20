@@ -1,5 +1,8 @@
 # Changelog for TurnOnOffRePowered
 
+1.4.3 - Replaced the info-patch, latest rimworld-update broke it
+
+
 1.4.2 - Removed unnecessary reflection for autodoors, thanks Taranchuk
 
 

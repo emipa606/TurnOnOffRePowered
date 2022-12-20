@@ -29,7 +29,7 @@ public class TurnItOnandOff : ModBase
 
     private static readonly HashSet<Building> buildingsInUseThisTick = new HashSet<Building>();
 
-    private static readonly HashSet<Building> buildingsThatWereUsedLastTick = new HashSet<Building>();
+    public static readonly HashSet<Building> buildingsThatWereUsedLastTick = new HashSet<Building>();
 
     private static readonly HashSet<Building> DeepDrills = new HashSet<Building>();
 
