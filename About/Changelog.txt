@@ -1,5 +1,8 @@
 # Changelog for TurnOnOffRePowered
 
+1.4.4 - No error when abandoning the only settlemet
+
+
 1.4.3 - Replaced the info-patch, latest rimworld-update broke it
 
 

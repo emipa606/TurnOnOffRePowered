@@ -191,8 +191,8 @@ public class TurnItOnandOff : ModBase
 
         if (Find.CurrentMap == null)
         {
-            Log.ErrorOnce("[TurnOnOffRepowered] No home map found, cannot find any colony-owned buildings",
-                "TurnOnOffRepowered".GetHashCode());
+            //Log.ErrorOnce("[TurnOnOffRepowered] No home map found, cannot find any colony-owned buildings",
+            //    "TurnOnOffRepowered".GetHashCode());
             return;
         }
 
