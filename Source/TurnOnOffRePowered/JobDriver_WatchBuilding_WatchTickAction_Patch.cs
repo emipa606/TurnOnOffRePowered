@@ -1,11 +1,10 @@
-﻿using System;
-using HarmonyLib;
+﻿using HarmonyLib;
 using RimWorld;
 using Verse;
 
 namespace TurnOnOffRePowered;
 
-[HarmonyPatch(typeof(JobDriver_WatchBuilding), "WatchTickAction", new Type[] { })]
+[HarmonyPatch(typeof(JobDriver_WatchBuilding), "WatchTickAction")]
 public static class JobDriver_WatchBuilding_WatchTickAction_Patch
 {
     [HarmonyPrefix]

@@ -1,11 +1,10 @@
-﻿using System;
-using HarmonyLib;
+﻿using HarmonyLib;
 using RimWorld;
 
 namespace TurnOnOffRePowered;
 
 // Track the power users
-[HarmonyPatch(typeof(Building_WorkTable), "UsedThisTick", new Type[] { })]
+[HarmonyPatch(typeof(Building_WorkTable), nameof(Building_WorkTable.UsedThisTick))]
 public static class Building_WorkTable_UsedThisTick_Patch
 {
     [HarmonyPrefix]

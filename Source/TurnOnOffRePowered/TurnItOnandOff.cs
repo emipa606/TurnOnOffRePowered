@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using HarmonyLib;
 using HugsLib;
 using HugsLib.Settings;
 using RePower;
@@ -14,38 +15,38 @@ namespace TurnOnOffRePowered;
 
 public class TurnItOnandOff : ModBase
 {
-    public static readonly HashSet<Building> buildingsToModifyPowerOn = new HashSet<Building>();
+    public static readonly HashSet<Building> buildingsToModifyPowerOn = [];
 
-    public static readonly List<string> AlwaysIgnored = new List<string> { "Furnace" };
+    public static readonly List<string> AlwaysIgnored = ["Furnace"];
 
     // Power levels pairs as Vector2's, X = Idling, Y = In Use
     public static Dictionary<string, Vector2> powerLevels = new Dictionary<string, Vector2>();
 
-    private static readonly HashSet<ThingDef> AutodoorDefs = new HashSet<ThingDef>();
+    private static readonly HashSet<ThingDef> AutodoorDefs = [];
 
-    private static readonly HashSet<Building> Autodoors = new HashSet<Building>();
+    private static readonly HashSet<Building> Autodoors = [];
 
-    private static readonly HashSet<ThingDef> buildingDefsReservable = new HashSet<ThingDef>();
+    private static readonly HashSet<ThingDef> buildingDefsReservable = [];
 
-    private static readonly HashSet<Building> buildingsInUseThisTick = new HashSet<Building>();
+    private static readonly HashSet<Building> buildingsInUseThisTick = [];
 
-    public static readonly HashSet<Building> buildingsThatWereUsedLastTick = new HashSet<Building>();
+    public static readonly HashSet<Building> buildingsThatWereUsedLastTick = [];
 
-    private static readonly HashSet<Building> DeepDrills = new HashSet<Building>();
+    private static readonly HashSet<Building> DeepDrills = [];
 
-    private static readonly HashSet<Building> Scanners = new HashSet<Building>();
+    private static readonly HashSet<Building> Scanners = [];
 
-    private static readonly HashSet<Building> RimfactoryBuildings = new HashSet<Building>();
+    private static readonly HashSet<Building> RimfactoryBuildings = [];
 
-    private static readonly HashSet<Building> HiTechResearchBenches = new HashSet<Building>();
+    private static readonly HashSet<Building> HiTechResearchBenches = [];
 
-    private static readonly HashSet<Building> HydroponcsBasins = new HashSet<Building>();
+    private static readonly HashSet<Building> HydroponcsBasins = [];
 
-    private static readonly HashSet<Building_Bed> MedicalBeds = new HashSet<Building_Bed>();
+    private static readonly HashSet<Building_Bed> MedicalBeds = [];
 
-    private static readonly HashSet<Building> reservableBuildings = new HashSet<Building>();
+    private static readonly HashSet<Building> reservableBuildings = [];
 
-    private static readonly HashSet<Building_Turret> Turrets = new HashSet<Building_Turret>();
+    private static readonly HashSet<Building_Turret> Turrets = [];
 
     private static ThingDef DeepDrillDef;
 
@@ -67,10 +68,13 @@ public class TurnItOnandOff : ModBase
 
     private static bool selfLitHydroponicsIsLoaded;
 
-    // ReSharper disable once CollectionNeverUpdated.Local
-    private readonly HashSet<Building> scheduledBuildings = new HashSet<Building>();
+    private static readonly MethodInfo canTryCloseAutomaticallyMethod =
+        AccessTools.PropertyGetter(typeof(Building_Door), "CanTryCloseAutomatically");
 
-    private readonly HashSet<ThingDef> ScheduledBuildingsDefs = new HashSet<ThingDef>();
+    // ReSharper disable once CollectionNeverUpdated.Local
+    private readonly HashSet<Building> scheduledBuildings = [];
+
+    private readonly HashSet<ThingDef> ScheduledBuildingsDefs = [];
 
     private SettingHandle<bool> applyRepowerVanilla;
 
@@ -146,7 +150,7 @@ public class TurnItOnandOff : ModBase
             false);
         rimfactoryIsLoaded = ModLister.GetActiveModWithIdentifier("spdskatr.projectrimfactory") != null;
         selfLitHydroponicsIsLoaded = ModLister.GetActiveModWithIdentifier("Aidan.SelfLitHydroponics") != null;
-        rimfactoryAssemblerDefs = new List<ThingDef>();
+        rimfactoryAssemblerDefs = [];
         if (rimfactoryIsLoaded)
         {
             LogMessage("Project Rimfactory is loaded");
@@ -268,7 +272,7 @@ public class TurnItOnandOff : ModBase
                     continue;
                 }
 
-                var canTryCloseAutomatically = buildingDoor.CanTryCloseAutomatically;
+                var canTryCloseAutomatically = (bool)canTryCloseAutomaticallyMethod.Invoke(buildingDoor, null);
                 if (buildingDoor.Open && !buildingDoor.BlockedOpenMomentary &&
                     (!buildingDoor.HoldOpen && canTryCloseAutomatically ||
                      buildingDoor.TicksTillFullyOpened > 0))
@@ -387,7 +391,7 @@ public class TurnItOnandOff : ModBase
     }
 
     // How to tell if a research table is in use?
-    // I can't figure it out. Instead let's base it on being reserved for use
+    // I can't figure it out. Instead, let's base it on being reserved for use
     private static void EvalResearchTables()
     {
         foreach (var researchTable in HiTechResearchBenches)
@@ -555,7 +559,7 @@ public class TurnItOnandOff : ModBase
         // Build the set of def names to look for if we don't have it
         if (thingDefsToLookFor == null)
         {
-            thingDefsToLookFor = new HashSet<ThingDef>();
+            thingDefsToLookFor = [];
             var defNames = powerLevels.Keys;
             foreach (var defName in defNames)
             {
@@ -834,7 +838,7 @@ public class TurnItOnandOff : ModBase
 
         if (!applyRepowerVanilla)
         {
-            repowerVanilla = new List<string[]>();
+            repowerVanilla = [];
             specialCases.Add("HiTechResearchBench");
         }
 
@@ -882,7 +886,7 @@ public class TurnItOnandOff : ModBase
                 RegisterSpecialPowerTrader(
                     def.defName,
                     lowPower,
-                    powerProps.basePowerConsumption * highPowerMultiplier * -1);
+                    powerProps.PowerConsumption * highPowerMultiplier * -1);
                 continue;
             }
 
@@ -903,14 +907,14 @@ public class TurnItOnandOff : ModBase
                 RegisterSpecialPowerTrader(
                     def.defName,
                     lowPower,
-                    powerProps.basePowerConsumption * doorPowerMultiplier * -1);
+                    powerProps.PowerConsumption * doorPowerMultiplier * -1);
                 continue;
             }
 
             RegisterPowerUserBuilding(
                 def.defName,
                 lowPower,
-                powerProps.basePowerConsumption * highPowerMultiplier * -1);
+                powerProps.PowerConsumption * highPowerMultiplier * -1);
         }
 
         if (powerLevels.ContainsKey("FM_AIManager"))
