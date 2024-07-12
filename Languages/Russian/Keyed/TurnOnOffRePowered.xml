@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <LanguageData>
   <lowValue.label>Потребляемая мощность при простое, Вт </lowValue.label>
   <lowValue.tooltip>Сколько ватт должно потребляться, когда рабочее оборудование простаивает?</lowValue.tooltip>

@@ -19,6 +19,8 @@ public class TurnItOnandOff : ModBase
 
     public static readonly List<string> AlwaysIgnored = ["Furnace"];
 
+    public static readonly List<Type> AlwaysIgnoredClass = [typeof(Building_MechGestator)];
+
     // Power levels pairs as Vector2's, X = Idling, Y = In Use
     public static Dictionary<string, Vector2> powerLevels = new Dictionary<string, Vector2>();
 
@@ -842,9 +844,15 @@ public class TurnItOnandOff : ModBase
             specialCases.Add("HiTechResearchBench");
         }
 
-        foreach (var def in DefDatabase<ThingDef>.AllDefsListForReading.Where(def =>
-                     !AlwaysIgnored.Contains(def.defName)))
+        foreach (var def in DefDatabase<ThingDef>.AllDefsListForReading)
         {
+            //LogMessage($"Checking {def.defName}, thingClass {def.thingClass}");
+            if (AlwaysIgnored.Contains(def.defName) || AlwaysIgnoredClass.Contains(def.thingClass))
+            {
+                LogMessage($"Ignoring {def.LabelCap}");
+                continue;
+            }
+
             if ((from stringArray in repowerVanilla where stringArray[0] == def.defName select stringArray).Any())
             {
                 var repowerSetting = (from stringArray in repowerVanilla
