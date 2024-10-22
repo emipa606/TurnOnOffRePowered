@@ -1,5 +1,8 @@
 # Changelog for TurnOnOffRePowered
 
+1.5.2 - Restructured the code a bit
+
+
 1.5.1 - Fixed mech gestator inverted powercomp
 
 

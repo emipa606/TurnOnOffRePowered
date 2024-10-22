@@ -4,10 +4,10 @@ using HarmonyLib;
 using RimWorld;
 using Verse;
 
-namespace TurnOnOffRePowered;
+namespace TurnOnOffRePowered.HarmonyPatches;
 
-[HarmonyPatch(typeof(CompPowerTrader), "CompInspectStringExtra")]
-public static class CompPowerTrader_CompInspectStringExtra_Patch
+[HarmonyPatch(typeof(CompPowerTrader), nameof(CompPowerTrader.CompInspectStringExtra))]
+public static class CompPowerTrader_CompInspectStringExtra
 {
     [HarmonyPostfix]
     public static void AddRequiredText(CompPowerTrader __instance, ref string __result)

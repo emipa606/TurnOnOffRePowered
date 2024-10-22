@@ -2,10 +2,10 @@
 using RimWorld;
 using Verse;
 
-namespace TurnOnOffRePowered;
+namespace TurnOnOffRePowered.HarmonyPatches;
 
 [HarmonyPatch(typeof(JobDriver_WatchBuilding), "WatchTickAction")]
-public static class JobDriver_WatchBuilding_WatchTickAction_Patch
+public static class JobDriver_WatchBuilding_WatchTickAction
 {
     [HarmonyPrefix]
     public static void WatchTickAction(JobDriver_WatchBuilding __instance)
