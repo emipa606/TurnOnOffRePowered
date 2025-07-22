@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<LanguageData>
+  <!-- EN: There is an added option in the settings now for applying the default settings in the RePower-mod.\nSince this mod is a combination of the two mods it applies the default-values for some items that were defined in the RePower mod, independent of the power-settings defined in the options.\nThese included the Crematorium, High-Tech research bench and the smelter and defined these structures to have generally higher high/low values.\nYou can now disable this behaviour in the settings if needed.\n -->
+  <TurnOnOffRePowered_1_0_3_0.content>There is an added option in the settings now for applying the default settings in the RePower-mod.
+Since this mod is a combination of the two mods it applies the default-values for some items that were defined in the RePower mod, independent of the power-settings defined in the options.
+These included the Crematorium, High-Tech research bench and the smelter and defined these structures to have generally higher high/low values.
+You can now disable this behaviour in the settings if needed.
+</TurnOnOffRePowered_1_0_3_0.content>
+  <!-- EN: Got a question about support for Turrets so I decided to add that. Any turret that uses the base-class Building_Turret should be supported. If there are others that dont seem to get the power-change, please leave a link to the mod the turret is from and Ill see if I can add it.\n\nTurrets will draw the high power-load when they have an active target.\n -->
+  <TurnOnOffRePowered_1_0_7_0.content>Got a question about support for Turrets so I decided to add that. Any turret that uses the base-class Building_Turret should be supported. If there are others that dont seem to get the power-change, please leave a link to the mod the turret is from and Ill see if I can add it.
+
+Turrets will draw the high power-load when they have an active target.
+</TurnOnOffRePowered_1_0_7_0.content>
+  <!-- EN: The mod now has an option (default on) that blocks workbenches if they would not have enough power when in use.\nSo if the power-generation is not higher than what the bench would use and there not enough power in connected batteries, no bill will be done.\nThis will stop the issue when a pawn tries to cook a meal, instantly draining the batteries, aborting the job, then trying again as some power has returned to the batteries. -->
+  <TurnOnOffRePowered_1_3_6.content>The mod now has an option (default on) that blocks workbenches if they would not have enough power when in use.
+So if the power-generation is not higher than what the bench would use and there not enough power in connected batteries, no bill will be done.
+This will stop the issue when a pawn tries to cook a meal, instantly draining the batteries, aborting the job, then trying again as some power has returned to the batteries.</TurnOnOffRePowered_1_3_6.content>
+</LanguageData>

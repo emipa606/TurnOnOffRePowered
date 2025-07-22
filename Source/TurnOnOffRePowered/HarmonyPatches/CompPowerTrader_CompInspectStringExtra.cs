@@ -9,8 +9,7 @@ namespace TurnOnOffRePowered.HarmonyPatches;
 [HarmonyPatch(typeof(CompPowerTrader), nameof(CompPowerTrader.CompInspectStringExtra))]
 public static class CompPowerTrader_CompInspectStringExtra
 {
-    [HarmonyPostfix]
-    public static void AddRequiredText(CompPowerTrader __instance, ref string __result)
+    public static void Postfix(CompPowerTrader __instance, ref string __result)
     {
         var parent = __instance.parent;
         if (!TurnItOnandOff.buildingsToModifyPowerOn.Contains(parent)

@@ -22,7 +22,7 @@ public class TurnItOnandOff : ModBase
     public static readonly List<Type> AlwaysIgnoredClass = [typeof(Building_MechGestator)];
 
     // Power levels pairs as Vector2's, X = Idling, Y = In Use
-    public static Dictionary<string, Vector2> powerLevels = new Dictionary<string, Vector2>();
+    public static Dictionary<string, Vector2> powerLevels = new();
 
     private static readonly HashSet<ThingDef> AutodoorDefs = [];
 
@@ -56,7 +56,7 @@ public class TurnItOnandOff : ModBase
 
     private static ThingDef HydroponicsBasinDef;
 
-    public static TurnItOnandOff instance;
+    private static TurnItOnandOff instance;
 
     private static int inUseTick;
 
@@ -101,20 +101,6 @@ public class TurnItOnandOff : ModBase
         buildingsInUseThisTick.Add(building);
     }
 
-    public static float PowerFactor(Building building)
-    {
-        var defName = building.def.defName;
-
-        if (!powerLevels.ContainsKey(defName))
-        {
-            return 1;
-        }
-
-        var inUse = buildingsThatWereUsedLastTick.Contains(building);
-        LogMessage($"{building.ThingID} ({defName}) power adjusted");
-        return powerLevels[defName][inUse ? 1 : 0];
-    }
-
     public override void DefsLoaded()
     {
         lowValue = Settings.GetHandle(
@@ -150,36 +136,36 @@ public class TurnItOnandOff : ModBase
             "verboseLogging.label".Translate(),
             "verboseLogging.tooltip".Translate(),
             false);
-        rimfactoryIsLoaded = ModLister.GetActiveModWithIdentifier("spdskatr.projectrimfactory") != null;
-        selfLitHydroponicsIsLoaded = ModLister.GetActiveModWithIdentifier("Aidan.SelfLitHydroponics") != null;
+        rimfactoryIsLoaded = ModLister.GetActiveModWithIdentifier("spdskatr.projectrimfactory", true) != null;
+        selfLitHydroponicsIsLoaded = ModLister.GetActiveModWithIdentifier("Aidan.SelfLitHydroponics", true) != null;
         rimfactoryAssemblerDefs = [];
         if (rimfactoryIsLoaded)
         {
-            LogMessage("Project Rimfactory is loaded");
+            logMessage("Project Rimfactory is loaded");
             rimfactoryAssemblerDefs = DefDatabase<ThingDef>.AllDefsListForReading.Where(def =>
                 def.defName.StartsWith("PRF_") && def.thingClass.Name.EndsWith("Assembler")).ToList();
         }
 
-        UpdateDefinitions();
+        updateDefinitions();
     }
 
     public override void Initialize()
     {
         instance = this;
 
-        LogMessage("Registered instance");
+        logMessage("Registered instance");
     }
 
     public override void SettingsChanged()
     {
         base.SettingsChanged();
-        ClearVariables();
-        UpdateDefinitions();
+        clearVariables();
+        updateDefinitions();
     }
 
     public override void Tick(int currentTick)
     {
-        EvaluateRimfactoryWork();
+        evaluateRimfactoryWork();
         if (inUseTick == 0)
         {
             inUseTick = currentTick;
@@ -197,8 +183,6 @@ public class TurnItOnandOff : ModBase
 
         if (Find.CurrentMap == null)
         {
-            //Log.ErrorOnce("[TurnOnOffRepowered] No home map found, cannot find any colony-owned buildings",
-            //    "TurnOnOffRepowered".GetHashCode());
             return;
         }
 
@@ -214,23 +198,23 @@ public class TurnItOnandOff : ModBase
         if (ticksToRescan < 0)
         {
             ticksToRescan = 2000;
-            ScanForThings();
+            scanForThings();
         }
 
-        EvalBeds();
-        EvalResearchTables();
-        EvalAutodoors();
-        EvalDeepDrills();
-        EvalScanners();
-        EvalHydroponicsBasins();
-        EvalTurrets();
-        EvalScheduledBuildings();
+        evaluateBeds();
+        evaluateResearchTables();
+        evaluateAutodoors();
+        evaluateDeepDrills();
+        evaluateScanners();
+        evalHydroponicsBasins();
+        evalTurrets();
+        evalScheduledBuildings();
 
         foreach (var thing in buildingsToModifyPowerOn)
         {
             if (thing == null)
             {
-                LogMessage("Tried to modify power level for thing which no longer exists");
+                logMessage("Tried to modify power level for thing which no longer exists");
                 continue;
             }
 
@@ -256,7 +240,7 @@ public class TurnItOnandOff : ModBase
         }
     }
 
-    private static void EvalAutodoors()
+    private static void evaluateAutodoors()
     {
         foreach (var autodoor in Autodoors)
         {
@@ -324,17 +308,17 @@ public class TurnItOnandOff : ModBase
     }
 
     // Evaluate medical beds for medical beds in use, to register that the vitals monitors should be in high power mode
-    private static void EvalBeds()
+    private static void evaluateBeds()
     {
-        foreach (var mediBed in MedicalBeds)
+        foreach (var medicalBeds in MedicalBeds)
         {
-            if (mediBed?.Map == null)
+            if (medicalBeds?.Map == null)
             {
                 continue;
             }
 
             var occupied = false;
-            foreach (var unused in mediBed.CurOccupants)
+            foreach (var unused in medicalBeds.CurOccupants)
             {
                 occupied = true;
             }
@@ -344,7 +328,7 @@ public class TurnItOnandOff : ModBase
                 continue;
             }
 
-            var facilityAffector = mediBed.GetComp<CompAffectedByFacilities>();
+            var facilityAffector = medicalBeds.GetComp<CompAffectedByFacilities>();
             foreach (var facility in facilityAffector.LinkedFacilitiesListForReading)
             {
                 buildingsInUseThisTick.Add(facility as Building);
@@ -352,7 +336,7 @@ public class TurnItOnandOff : ModBase
         }
     }
 
-    private static void EvalDeepDrills()
+    private static void evaluateDeepDrills()
     {
         foreach (var deepDrill in DeepDrills)
         {
@@ -372,7 +356,7 @@ public class TurnItOnandOff : ModBase
         }
     }
 
-    private static void EvalScanners()
+    private static void evaluateScanners()
     {
         foreach (var scanner in Scanners)
         {
@@ -394,7 +378,7 @@ public class TurnItOnandOff : ModBase
 
     // How to tell if a research table is in use?
     // I can't figure it out. Instead, let's base it on being reserved for use
-    private static void EvalResearchTables()
+    private static void evaluateResearchTables()
     {
         foreach (var researchTable in HiTechResearchBenches)
         {
@@ -422,7 +406,7 @@ public class TurnItOnandOff : ModBase
         }
     }
 
-    private static void EvaluateRimfactoryWork()
+    private static void evaluateRimfactoryWork()
     {
         if (!rimfactoryIsLoaded)
         {
@@ -486,7 +470,7 @@ public class TurnItOnandOff : ModBase
         }
     }
 
-    private static void RegisterExternalReservable(string defName, int lowPower, int highPower)
+    private static void registerExternalReservable(string defName, int lowPower, int highPower)
     {
         try
         {
@@ -494,13 +478,13 @@ public class TurnItOnandOff : ModBase
 
             if (defName == null)
             {
-                LogMessage("Defname could not be found, it's respective mod probably isn't loaded");
+                logMessage("Defname could not be found, it's respective mod probably isn't loaded");
                 return;
             }
 
-            LogMessage($"Attempting to register def named {defName}");
+            logMessage($"Attempting to register def named {defName}");
 
-            RegisterPowerUserBuilding(defName, lowPower, highPower);
+            registerPowerUserBuilding(defName, lowPower, highPower);
             buildingDefsReservable.Add(def);
         }
         catch (Exception e)
@@ -509,28 +493,28 @@ public class TurnItOnandOff : ModBase
         }
     }
 
-    private static void RegisterPowerUserBuilding(string defName, float idlePower, float activePower)
+    private static void registerPowerUserBuilding(string defName, float idlePower, float activePower)
     {
-        LogMessage(
+        logMessage(
             $"adding {DefDatabase<ThingDef>.GetNamedSilentFail(defName).label.CapitalizeFirst()}, low: {idlePower}, high: {activePower}");
 
         powerLevels.Add(defName, new Vector2(idlePower, activePower));
     }
 
-    private static void RegisterSpecialPowerTrader(string defName, float idlePower, float activePower)
+    private static void registerSpecialPowerTrader(string defName, float idlePower, float activePower)
     {
         if (powerLevels.ContainsKey(defName))
         {
             return;
         }
 
-        LogMessage(
+        logMessage(
             $"adding special {DefDatabase<ThingDef>.GetNamedSilentFail(defName).label.CapitalizeFirst()}, low: {idlePower}, high: {activePower}");
 
         powerLevels.Add(defName, new Vector2(idlePower, activePower));
     }
 
-    private static void ScanExternalReservable()
+    private static void scanExternalReservable()
     {
         reservableBuildings.Clear();
         foreach (var def in buildingDefsReservable)
@@ -556,7 +540,7 @@ public class TurnItOnandOff : ModBase
         }
     }
 
-    private static void ScanForThings()
+    private static void scanForThings()
     {
         // Build the set of def names to look for if we don't have it
         if (thingDefsToLookFor == null)
@@ -583,7 +567,7 @@ public class TurnItOnandOff : ModBase
             return;
         }
 
-        ScanExternalReservable(); // Handle the scanning of external reservable objects
+        scanExternalReservable(); // Handle the scanning of external reservable objects
 
         var maps = Find.Maps;
         foreach (var map in maps)
@@ -622,10 +606,10 @@ public class TurnItOnandOff : ModBase
             }
 
             // Register the medical beds in the watch list
-            var mediBeds = map.listerBuildings.AllBuildingsColonistOfDef(medicalBedDef);
-            foreach (var mediBed in mediBeds)
+            var medicalBeds = map.listerBuildings.AllBuildingsColonistOfDef(medicalBedDef);
+            foreach (var bed in medicalBeds)
             {
-                var medicalBed = mediBed as Building_Bed;
+                var medicalBed = bed as Building_Bed;
                 MedicalBeds.Add(medicalBed);
             }
 
@@ -653,7 +637,7 @@ public class TurnItOnandOff : ModBase
         }
     }
 
-    private void ClearVariables()
+    private void clearVariables()
     {
         powerLevels = new Dictionary<string, Vector2>();
         buildingsToModifyPowerOn.Clear();
@@ -676,7 +660,7 @@ public class TurnItOnandOff : ModBase
         lastVisibleBuildings = 0;
     }
 
-    private void EvalHydroponicsBasins()
+    private static void evalHydroponicsBasins()
     {
         if (selfLitHydroponicsIsLoaded)
         {
@@ -707,7 +691,7 @@ public class TurnItOnandOff : ModBase
         }
     }
 
-    private void EvalScheduledBuildings()
+    private void evalScheduledBuildings()
     {
         foreach (var building in scheduledBuildings)
         {
@@ -729,7 +713,7 @@ public class TurnItOnandOff : ModBase
         }
     }
 
-    private void EvalTurrets()
+    private static void evalTurrets()
     {
         foreach (var turret in Turrets)
         {
@@ -747,7 +731,7 @@ public class TurnItOnandOff : ModBase
         }
     }
 
-    private bool IsDoorType(ThingDef def)
+    private static bool isDoorType(ThingDef def)
     {
         if (typeof(Building_Door).IsAssignableFrom(def.thingClass))
         {
@@ -757,17 +741,17 @@ public class TurnItOnandOff : ModBase
         return def.thingClass.FullName == "DoorsExpanded.Building_DoorRemote";
     }
 
-    public static void LogMessage(string Message)
+    private static void logMessage(string message)
     {
         if (instance.verboseLogging is not { Value: true })
         {
             return;
         }
 
-        Log.Message($"[TurnOnOffRePowered]: {Message}");
+        Log.Message($"[TurnOnOffRePowered]: {message}");
     }
 
-    private void RegisterScheduledBuilding(string defName, int lowPower, int highPower)
+    private void registerScheduledBuilding(string defName, int lowPower, int highPower)
     {
         if (defName == null)
         {
@@ -778,7 +762,7 @@ public class TurnItOnandOff : ModBase
         try
         {
             var def = DefDatabase<ThingDef>.GetNamedSilentFail(defName);
-            RegisterPowerUserBuilding(defName, lowPower, highPower);
+            registerPowerUserBuilding(defName, lowPower, highPower);
             ScheduledBuildingsDefs.Add(def);
         }
         catch (Exception e)
@@ -787,13 +771,13 @@ public class TurnItOnandOff : ModBase
         }
     }
 
-    private void UpdateDefinitions()
+    private void updateDefinitions()
     {
-        LogMessage("Clearing power-levels");
+        logMessage("Clearing power-levels");
 
         powerLevels = new Dictionary<string, Vector2>();
-        UpdateRepowerDefs();
-        UpdateTurnItOnandOffDefs();
+        updateRepowerDefs();
+        UpdateTurnItOnAndOffDefs();
         var lowPower = -10f;
         if (lowValue != null)
         {
@@ -849,7 +833,7 @@ public class TurnItOnandOff : ModBase
             //LogMessage($"Checking {def.defName}, thingClass {def.thingClass}");
             if (AlwaysIgnored.Contains(def.defName) || AlwaysIgnoredClass.Contains(def.thingClass))
             {
-                LogMessage($"Ignoring {def.LabelCap}");
+                logMessage($"Ignoring {def.LabelCap}");
                 continue;
             }
 
@@ -860,14 +844,14 @@ public class TurnItOnandOff : ModBase
                     select stringArray).First();
                 if (repowerSetting[3] == "Normal")
                 {
-                    RegisterPowerUserBuilding(
+                    registerPowerUserBuilding(
                         def.defName,
                         -Convert.ToInt32(repowerSetting[1]),
                         -Convert.ToInt32(repowerSetting[2]));
                 }
                 else
                 {
-                    RegisterSpecialPowerTrader(
+                    registerSpecialPowerTrader(
                         def.defName,
                         -Convert.ToInt32(repowerSetting[1]),
                         -Convert.ToInt32(repowerSetting[2]));
@@ -891,7 +875,7 @@ public class TurnItOnandOff : ModBase
 
             if (specialCases.Contains(def.defName))
             {
-                RegisterSpecialPowerTrader(
+                registerSpecialPowerTrader(
                     def.defName,
                     lowPower,
                     powerProps.PowerConsumption * highPowerMultiplier * -1);
@@ -900,7 +884,7 @@ public class TurnItOnandOff : ModBase
 
             if (!typeof(Building_WorkTable).IsAssignableFrom(def.thingClass)
                 && !typeof(Building_Turret).IsAssignableFrom(def.thingClass)
-                && !IsDoorType(def)
+                && !isDoorType(def)
                 && !def.comps.Any(comp => comp.GetType().IsSubclassOf(typeof(CompProperties_Scanner)))
                 && !rimfactoryAssemblerDefs.Contains(def))
             {
@@ -909,37 +893,34 @@ public class TurnItOnandOff : ModBase
                 continue;
             }
 
-            if (IsDoorType(def))
+            if (isDoorType(def))
             {
                 AutodoorDefs.Add(def);
-                RegisterSpecialPowerTrader(
+                registerSpecialPowerTrader(
                     def.defName,
                     lowPower,
                     powerProps.PowerConsumption * doorPowerMultiplier * -1);
                 continue;
             }
 
-            RegisterPowerUserBuilding(
+            registerPowerUserBuilding(
                 def.defName,
                 lowPower,
                 powerProps.PowerConsumption * highPowerMultiplier * -1);
         }
 
-        if (powerLevels.ContainsKey("FM_AIManager"))
-        {
-            powerLevels.Remove("FM_AIManager");
-        }
+        powerLevels.Remove("FM_AIManager");
 
-        LogMessage("Initialized Components");
+        logMessage("Initialized Components");
 
         medicalBedDef = ThingDef.Named("HospitalBed");
         HiTechResearchBenchDef = ThingDef.Named("HiTechResearchBench");
         DeepDrillDef = ThingDef.Named("DeepDrill");
         HydroponicsBasinDef = ThingDef.Named("HydroponicsBasin");
-        ScanForThings();
+        scanForThings();
     }
 
-    private void UpdateRepowerDefs()
+    private void updateRepowerDefs()
     {
         var defs = DefDatabase<RePowerDef>.AllDefs;
 
@@ -955,17 +936,17 @@ public class TurnItOnandOff : ModBase
 
             if (def.poweredWorkbench)
             {
-                RegisterPowerUserBuilding(namedDef.defName, def.lowPower, def.highPower);
+                registerPowerUserBuilding(namedDef.defName, def.lowPower, def.highPower);
             }
 
             if (def.poweredReservable)
             {
-                RegisterExternalReservable(namedDef.defName, def.lowPower, def.highPower);
+                registerExternalReservable(namedDef.defName, def.lowPower, def.highPower);
             }
 
             if (def.scheduledPower)
             {
-                RegisterScheduledBuilding(namedDef.defName, def.lowPower, def.highPower);
+                registerScheduledBuilding(namedDef.defName, def.lowPower, def.highPower);
             }
 
             // Some objects might not be reservable, like workbenches.
@@ -977,7 +958,7 @@ public class TurnItOnandOff : ModBase
         }
     }
 
-    private void UpdateTurnItOnandOffDefs()
+    private static void UpdateTurnItOnAndOffDefs()
     {
         var defs = DefDatabase<TurnItOnandOffDef>.AllDefs;
         foreach (var def in defs)
@@ -991,12 +972,12 @@ public class TurnItOnandOff : ModBase
 
             if (def.poweredWorkbench)
             {
-                RegisterPowerUserBuilding(namedDef.defName, def.lowPower, def.highPower);
+                registerPowerUserBuilding(namedDef.defName, def.lowPower, def.highPower);
             }
 
             if (def.poweredReservable)
             {
-                RegisterExternalReservable(namedDef.defName, def.lowPower, def.highPower);
+                registerExternalReservable(namedDef.defName, def.lowPower, def.highPower);
             }
         }
     }
@@ -1036,19 +1017,19 @@ public class TurnItOnandOff : ModBase
 
         if (currentGainRate >= currentPowerNeed)
         {
-            LogMessage(
+            logMessage(
                 $"Enough power: {table.def.label} requires {currentPowerNeed}, current gainrate: {currentGainRate}");
             return true;
         }
 
         if (currentSavedEnergy > currentPowerNeed * 500)
         {
-            LogMessage(
+            logMessage(
                 $"Enough power: {table.def.label} requires {currentPowerNeed * 500} saved, current saved power: {currentSavedEnergy}");
             return true;
         }
 
-        LogMessage(
+        logMessage(
             $"Not enough power: {table.def.label} requires {currentPowerNeed} gaining or {currentPowerNeed * 500} saved, current saved power: {currentSavedEnergy}, current gainrate: {currentGainRate}");
         JobFailReason.Is("notEnoughPower.failreason".Translate(currentPowerNeed, "unitOfPower".Translate()));
         return false;

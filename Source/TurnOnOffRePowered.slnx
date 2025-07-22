@@ -1,0 +1,12 @@
+<Solution>
+  <Folder Name="/.github/">
+    <File Path="../.github/copilot-instructions.md" />
+  </Folder>
+  <Configurations>
+    <BuildType Name="Release" />
+  </Configurations>
+  <Project Path="TurnOnOffRePowered/TurnOnOffRePowered.csproj" />
+  <Properties Name="MonoDevelopProperties">
+    <Property Name="outputpath" Value="." />
+  </Properties>
+</Solution>

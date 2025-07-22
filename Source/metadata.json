@@ -2,11 +2,18 @@
   "Continued": false,
   "CanAdd": "0",
   "CanRemove": "0",
-  "PreviewVersion": "1.5",
+  "PreviewVersion": "1.6",
   "SocialImageSet": true,
   "FundingSet": true,
   "SearchTags": [
     "power consumption",
     " realism"
-  ]
+  ],
+  "Patches": false,
+  "Defs": false,
+  "Assemblies": true,
+  "LinesOfCode": 37181,
+  "LinesOfXML": 0,
+  "CodeBaseSize": 72,
+  "LastXmlCleaning": "2025-07-22T22:22:02.0540776+02:00"
 }
