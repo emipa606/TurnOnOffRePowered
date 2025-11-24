@@ -28,4 +28,10 @@ Turrets will draw the high power-load when they have an active target.
 So if the power-generation is not higher than what the bench would use and there not enough power in connected batteries, no bill will be done.
 This will stop the issue when a pawn tries to cook a meal, instantly draining the batteries, aborting the job, then trying again as some power has returned to the batteries.</content>
   </HugsLib.UpdateFeatureDef>
+	<HugsLib.UpdateFeatureDef ParentName="TurnOnOffRePowered_UpdateFeatureBase">
+		<defName>TurnOnOffRePowered_1_6_0</defName>
+		<assemblyVersion>1.6.0</assemblyVersion>
+		<content>This update removes the need for HugsLib, thanks to Zaljerem!</content>
+	</HugsLib.UpdateFeatureDef>
 </Defs>
+

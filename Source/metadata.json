@@ -10,10 +10,10 @@
     " realism"
   ],
   "Patches": false,
-  "Defs": false,
+  "Defs": true,
   "Assemblies": true,
-  "LinesOfCode": 37181,
-  "LinesOfXML": 0,
+  "LinesOfCode": 41422,
+  "LinesOfXML": 593,
   "CodeBaseSize": 72,
-  "LastXmlCleaning": "2025-07-22T22:22:02.0540776+02:00"
+  "LastXmlCleaning": "2025-11-20T17:06:38.5011364+01:00"
 }

@@ -1,47 +1,40 @@
-# GitHub Copilot Instructions for RimWorld Modding Project
+# GitHub Copilot Instructions for RimWorld Modding Project: "Turn It On and Off - RePowered"
 
 ## Mod Overview and Purpose
-
-This RimWorld mod, titled "Turn It On and Off," enhances the gameplay by allowing players to have more control over powered devices in the colony. The mod primarily focuses on managing power consumption by enabling and disabling various powered devices such as turrets, work tables, hydroponics basins, and doors based on certain conditions. This not only optimizes power usage but also introduces strategic considerations for energy management within the game.
+"Turn It On and Off - RePowered" is a RimWorld mod that combines the best aspects of two existing mods: "Turn It On and Off" and "RePower." This project aims to enhance the realism of power consumption in RimWorld by allowing electrical devices to turn off when not in use, and by configuring more realistic power requirements through mod options. The mod maintains the functionality of using RePower patches for custom settings and ensures compatibility with RimWorld's vanilla mechanics.
 
 ## Key Features and Systems
-
-- **Dynamic Power Management**: The mod includes systems that can evaluate and adjust the power state of various devices automatically, potentially reducing unnecessary power consumption.
-
-- **Scheduled Building Management**: Players can set schedules for buildings that should be turned on or off, ensuring that power is used efficiently when needed.
-
-- **Turret Management**: Turrets can be evaluated based on criteria and turned off when not in use to save power.
-
-- **Hydroponics Basin Evaluation**: Adjusts power states of hydroponics basins, ensuring they are active when required for plant growth and saving power otherwise.
+- **Power Draw Adjustments**: Configure a multiplier for vanilla power-draw to achieve more realistic levels.
+- **Increased Compatibility**: Supports turrets, autodoors, Doors Expanded, and Project RimFactory Revived.
+- **Workbenches Power Management**: Blocks work on benches when power is insufficient, preserving continuity with those inheriting vanilla class methods.
+- **Language Support**: Includes French and Russian translations.
+- **Dynamic Changes**: Settings can be applied without restarting the game.
+- **Safe Installation/Removal**: Can be added or removed from current saves without impacting performance more than the original mods.
 
 ## Coding Patterns and Conventions
-
-- **Static Classes**: The mod makes extensive use of static classes, such as `Building_WorkTable_UsableForBillsAfterFueling` and `Building_WorkTable_UsedThisTick`, to encapsulate functionality that does not maintain state.
-
-- **Consistent Naming Conventions**: All classes and methods follow a clear and concise naming system, making it intuitive to understand their purpose, such as `EvalHydroponicsBasins` and `UpdateRepowerDefs`.
-
-- **Separation of Concerns**: Different responsibilities, such as evaluation of devices or updating definitions, are separated into distinct methods to maintain clean and readable code.
+- **Static Classes**: Utilize `public static class` for utility and component classes to organize code related to specific game mechanics without relying on object instances.
+- **Inheritance and Extension**: Leverage polymorphism for extending or altering the functionality of vanilla or modded classes, such as `GameComponent`, `ModSettings`, and `Def`.
+- **Method Visibility**: Design methods with public accessibility in utility classes to enable easy integration within other scripts or when patching.
+- **Namespaces and Modules**: Use clear namespaces to segment and manage different aspects of the project, ensuring easy identification of system-specific functionalities.
 
 ## XML Integration
-
-While the summary does not detail XML content, RimWorld mods often use XML to define game data like ThingDefs and WorkGivers. Ensure that your mod correctly references any necessary XML files to define new items or modify existing game data. Any XML files used should adhere to RimWorld's mod structure for easy compatibility and updates.
+- **Configuration and Customization**: XML files should be utilized to customize and define mod options, ensuring they are readable with RimWorld’s Def structure.
+- **Localization**: Manage translations within XML files to support multiple languages, maintaining the mod's multilingual capabilities.
 
 ## Harmony Patching
-
-Harmony is used for patching methods to extend or modify game behavior without modifying the original codebase. In this mod, files like `ThingWithComps_GetInspectString_Patch` suggest that patches are used to modify or extend the functionalities of RimWorld components like `CompPowerTrader`.
-
-- **Suggested Harmony Patterns**:
-  - **Prefix and Postfix Methods**: Use these to intercept and augment base game methods.
-  - **Transpiler**: For more complex modifications where reordering IL codes is necessary.
+- **Dynamic Runtime Alterations**: Use Harmony to patch existing methods in the game, allowing you to dynamically alter game behavior without modifying core game code directly.
+- **Targeted Patching**: Focus patches on key methods that govern power management and workload allowance to integrate features such as automatic power adjustments and active/inactive state management of devices.
+- **Collaboration**: Patches can share functionalities with related mods, like RePower, enhancing modularity and cross-compatibility.
 
 ## Suggestions for Copilot
+- **Code Completion**: Use Copilot to assist with method generation for handling dynamic configurations in `ModSettings` classes, reducing repetitive coding tasks.
+- **XML Generation**: Implement functionality for generating XML templates for new device or feature support, leveraging Copilot to ensure consistency.
+- **Patch Creation**: Facilitate the creation of Harmony patches by suggesting applicable entry and exit points in the base game code.
+- **Refactoring Assistance**: Use Copilot to help refactor legacy code for better performance and readability by suggesting optimized patterns and design structures.
+- **Documentation**: Utilize Copilot to aid in creating documentation comments within your codebase, improving maintainability and comprehension for collaborators or future review.
 
-- **Method Stubs and Completion**: Use Copilot to suggest method stubs and provide auto-completions for frequent tasks such as power evaluations and building schedules.
-  
-- **Pattern Recognition**: Leverage Copilot's pattern recognition to replicate similar logic across different classes and methods, such as power management routines for various building types.
+Credits:
+- Ryder, Thom Blair III, Fluffy, Xen, EbonJaeger, NubsPixel, Texel for prior work on the "Turn It On and Off" and "RePower" mods.
 
-- **Suggest XML Definitions**: Encourage Copilot to suggest XML snippets for defining new ThingDefs or modifying existing ones based on the context within the C# code.
 
-- **Harmony Practices**: Use Copilot for writing concise Harmony patch methods, ensuring to follow RimWorld's best practices in modding.
-
-This documentation should equip developers with the necessary information to understand and extend the "Turn It On and Off" mod, integrating further enhancements using C# and XML through the power of GitHub Copilot.
+This `.github/copilot-instructions.md` document offers developers comprehensive guidance on leveraging GitHub Copilot in a RimWorld mod project while maintaining the key features and systems refined through prior development efforts.

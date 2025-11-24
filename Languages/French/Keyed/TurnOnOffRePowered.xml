@@ -18,4 +18,5 @@
   <blockUseWhenLowPower.tooltip>Bloquera l'utilisation des établis si la production d'électricité est trop faible pour les supporter et s'il n'y a pas assez d'électricité économisée.</blockUseWhenLowPower.tooltip>
   <unitOfPower>W</unitOfPower>
   <notEnoughPower.failreason>Il n'y a pas assez de puissance disponible (besoins {0}) {1}</notEnoughPower.failreason>
+  <currentModVersion.label>Version installée du mod : {0}</currentModVersion.label>
 </LanguageData>

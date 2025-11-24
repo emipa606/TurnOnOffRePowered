@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Defs>
+	<TabulaRasa.UpdateDef Abstract="true" Name="TurnOnOffRePowered_UpdateInfoBase">
+		<linkUrl>https://steamcommunity.com/sharedfiles/filedetails/?id=2228219259</linkUrl>
+		<banner>UpdateInfo/TurnOnOffRePowered</banner>
+	</TabulaRasa.UpdateDef>
+	<TabulaRasa.UpdateDef ParentName="TurnOnOffRePowered_UpdateInfoBase" MayRequire="neronix17.toolbox">
+		<defName>TurnOnOffRePowered_1_6_0</defName>
+		<date>2025/11/20</date>
+		<content>This update removes the need for HugsLib, thanks to Zaljerem!</content>
+	</TabulaRasa.UpdateDef>
+</Defs>
+

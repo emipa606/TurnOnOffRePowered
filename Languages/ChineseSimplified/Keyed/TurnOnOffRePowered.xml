@@ -18,4 +18,5 @@
   <powerNeededInactive>不活跃</powerNeededInactive>
   <unitOfPower>W</unitOfPower>
   <notEnoughPower.failreason>没有足够的电力可用（需要{0}{1}）。</notEnoughPower.failreason>
+  <currentModVersion.label>已安装 MOD 版本：{0}</currentModVersion.label>
 </LanguageData>

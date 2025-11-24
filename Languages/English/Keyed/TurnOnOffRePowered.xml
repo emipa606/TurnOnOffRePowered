@@ -17,4 +17,5 @@
   <powerNeededInactive>inactive</powerNeededInactive>
   <unitOfPower>W</unitOfPower>
   <notEnoughPower.failreason>There is not enough power available (needs {0}{1})</notEnoughPower.failreason>
+  <currentModVersion.label>Installed mod-version: {0}</currentModVersion.label>
 </LanguageData>
