@@ -12,9 +12,9 @@
   "Patches": false,
   "Defs": true,
   "Assemblies": true,
-  "LinesOfCode": 41436,
+  "LinesOfCode": 41499,
   "LinesOfXML": 604,
-  "CodeBaseSize": 72,
-  "LastXmlCleaning": "2025-11-24T19:38:42.817629+01:00",
+  "CodeBaseSize": 73,
+  "LastXmlCleaning": "2025-12-08T20:24:09.0975857+01:00",
   "RimWorldBaseId": 23229
 }

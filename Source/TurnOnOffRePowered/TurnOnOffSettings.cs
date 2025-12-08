@@ -10,7 +10,7 @@ public class TurnOnOffSettings : ModSettings
     public float doorMultiplier = 10f;
     public float highMultiplier = 2.5f;
     public float lowValue = 10f;
-    public bool verboseLogging = false;
+    public bool verboseLogging;
 
     public override void ExposeData()
     {
@@ -19,7 +19,7 @@ public class TurnOnOffSettings : ModSettings
         Scribe_Values.Look(ref doorMultiplier, "doorMultiplier", 10f);
         Scribe_Values.Look(ref applyRepowerVanilla, "applyRepowerVanilla", true);
         Scribe_Values.Look(ref blockUseWhenLowPower, "blockUseWhenLowPower", true);
-        Scribe_Values.Look(ref verboseLogging, "verboseLogging", false);
+        Scribe_Values.Look(ref verboseLogging, "verboseLogging");
         base.ExposeData();
     }
 

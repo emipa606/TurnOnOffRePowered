@@ -1,5 +1,8 @@
 # Changelog for TurnOnOffRePowered
 
+1.6.3 - Fixed compatibility with [url=https://steamcommunity.com/sharedfiles/filedetails/?id=2033979700]Project RimFactory Revived[/url]
+
+
 1.6.2 - Ignore server rack, fixed typo
 
 

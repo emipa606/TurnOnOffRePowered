@@ -1,8 +1,8 @@
-﻿using HarmonyLib;
-using Mlie;
-using System.IO;
+﻿using System.IO;
 using System.Reflection;
 using System.Xml.Linq;
+using HarmonyLib;
+using Mlie;
 using UnityEngine;
 using Verse;
 
@@ -29,18 +29,22 @@ public class TurnOnOffMod : Mod
             () =>
             {
                 TurnItOnUtility.InitializeStatic();
-                TurnItOnUtility.DefsLoaded();         // moved content of original DefsLoaded()
+                TurnItOnUtility.DefsLoaded(); // moved content of original DefsLoaded()
             },
             "InitializingTurnOnOff",
             false,
             null);
     }
 
+    public static TurnOnOffMod Instance { get; private set; }
+
+    public TurnOnOffSettings Settings { get; }
+
 
     private static void importOldHugsLibSettings()
     {
         var hugsLibConfig = Path.Combine(GenFilePaths.SaveDataFolderPath, "HugsLib", "ModSettings.xml");
-        if(!new FileInfo(hugsLibConfig).Exists)
+        if (!new FileInfo(hugsLibConfig).Exists)
         {
             return;
         }
@@ -49,34 +53,39 @@ public class TurnOnOffMod : Mod
         var modNodeName = "TurnOnOffRePowered";
 
         var modSettings = xml.Root?.Element(modNodeName);
-        if(modSettings == null)
+        if (modSettings == null)
         {
             return;
         }
 
-        foreach(var modSetting in modSettings.Elements())
+        foreach (var modSetting in modSettings.Elements())
         {
-            if(modSetting.Name == "lowValue")
+            if (modSetting.Name == "lowValue")
             {
                 Instance.Settings.lowValue = float.Parse(modSetting.Value);
             }
-            if(modSetting.Name == "highMultiplier")
+
+            if (modSetting.Name == "highMultiplier")
             {
                 Instance.Settings.highMultiplier = float.Parse(modSetting.Value);
             }
-            if(modSetting.Name == "doorMultiplier")
+
+            if (modSetting.Name == "doorMultiplier")
             {
                 Instance.Settings.doorMultiplier = int.Parse(modSetting.Value);
             }
-            if(modSetting.Name == "applyRepowerVanilla")
+
+            if (modSetting.Name == "applyRepowerVanilla")
             {
                 Instance.Settings.applyRepowerVanilla = bool.Parse(modSetting.Value);
             }
-            if(modSetting.Name == "blockUseWhenLowPower")
+
+            if (modSetting.Name == "blockUseWhenLowPower")
             {
                 Instance.Settings.blockUseWhenLowPower = bool.Parse(modSetting.Value);
             }
-            if(modSetting.Name == "verboseLogging")
+
+            if (modSetting.Name == "verboseLogging")
             {
                 Instance.Settings.verboseLogging = bool.Parse(modSetting.Value);
             }
@@ -91,7 +100,7 @@ public class TurnOnOffMod : Mod
 
     public override void DoSettingsWindowContents(Rect inRect)
     {
-        Listing_Standard ls = new Listing_Standard();
+        var ls = new Listing_Standard();
         ls.Begin(inRect);
         ls.Gap();
 
@@ -109,23 +118,28 @@ public class TurnOnOffMod : Mod
         ls.CheckboxLabeled("verboseLogging.label".Translate(), ref Settings.verboseLogging);
 
         ls.Gap();
-        if(ls.ButtonText("Reset to defaults"))
+        if (ls.ButtonText("Reset to defaults"))
         {
             Settings.SetToDefaults();
             TurnItOnUtility.ClearVariables();
             TurnItOnUtility.DefsLoaded();
         }
-        if(currentVersion != null)
+
+        if (currentVersion != null)
         {
             ls.Gap();
             GUI.contentColor = Color.gray;
             ls.Label("currentModVersion.label".Translate(currentVersion));
             GUI.contentColor = Color.white;
         }
+
         ls.End();
     }
 
-    public override string SettingsCategory() { return "Turn It On and Off - RePowered"; }
+    public override string SettingsCategory()
+    {
+        return "Turn It On and Off - RePowered";
+    }
 
 
     public override void WriteSettings()
@@ -136,8 +150,4 @@ public class TurnOnOffMod : Mod
         TurnItOnUtility.ClearVariables();
         TurnItOnUtility.DefsLoaded();
     }
-
-    public static TurnOnOffMod Instance { get; private set; }
-
-    public TurnOnOffSettings Settings { get; private set; }
 }
