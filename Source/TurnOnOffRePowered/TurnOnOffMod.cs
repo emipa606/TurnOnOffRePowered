@@ -72,7 +72,7 @@ public class TurnOnOffMod : Mod
 
             if (modSetting.Name == "doorMultiplier")
             {
-                Instance.Settings.doorMultiplier = int.Parse(modSetting.Value);
+                Instance.Settings.doorMultiplier = float.Parse(modSetting.Value);
             }
 
             if (modSetting.Name == "applyRepowerVanilla")
