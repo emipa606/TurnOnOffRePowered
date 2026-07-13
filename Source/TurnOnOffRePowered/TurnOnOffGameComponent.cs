@@ -1,5 +1,4 @@
 ﻿using System;
-using RimWorld;
 using Verse;
 
 namespace TurnOnOffRePowered;
@@ -7,100 +6,102 @@ namespace TurnOnOffRePowered;
 // GameComponent: global Tick equivalent to old ModBase.Tick
 public class TurnOnOffGameComponent : GameComponent
 {
-    private int inUseTick;
-    private int lastVisibleBuildings;
-    private int ticksToRescan;
+	private const int FAST_EVALUATION_INTERVAL = 4;
+	private const int POWER_RECONCILIATION_INTERVAL = 60;
+	private const int REGULAR_EVALUATION_INTERVAL = 15;
+	private const int RESCAN_INTERVAL = 2000;
+	private const int SLOW_EVALUATION_INTERVAL = 60;
 
-    public TurnOnOffGameComponent(Game game)
-    {
-        //TurnItOnUtility.LogMessage("TurnOnOffGameComponent ctor");
-        // nothing heavy here; real initialization runs in DefsLoaded/InitializeStatic
-    }
+	private int in_use_tick;
+	private Map last_current_map;
+	private int last_visible_buildings;
+	private int next_fast_evaluation_tick;
+	private int next_power_reconciliation_tick;
+	private int next_regular_evaluation_tick;
+	private int next_slow_evaluation_tick;
+	private int ticks_to_rescan;
 
-    public override void GameComponentTick()
-    {
-        try
-        {
-            var currentTick = Find.TickManager.TicksGame;
-            TurnItOnUtility.EvaluateRimfactoryWork(); // optional smaller calls
+	public TurnOnOffGameComponent(Game game)
+	{
+	}
 
-            if (inUseTick == 0)
-            {
-                inUseTick = currentTick;
-                return;
-            }
+	public override void GameComponentTick()
+	{
+		try
+		{
+			var current_tick = Find.TickManager.TicksGame;
+			if (in_use_tick == 0)
+			{
+				in_use_tick = current_tick;
+				return;
+			}
 
-            if (inUseTick != currentTick)
-            {
-                inUseTick = currentTick;
+			if (in_use_tick == current_tick)
+			{
+				return;
+			}
 
-                TurnItOnUtility.buildingsThatWereUsedLastTick.Clear();
-                TurnItOnUtility.buildingsThatWereUsedLastTick.UnionWith(TurnItOnUtility.buildingsInUseThisTick);
-                TurnItOnUtility.buildingsInUseThisTick.Clear();
-            }
+			in_use_tick = current_tick;
+			TurnItOnUtility.BeginUsageTick();
 
-            // Only run scanning/evaluation when playing
-            if (Find.CurrentMap == null)
-            {
-                return;
-            }
+			var current_map = Find.CurrentMap;
+			if (current_map == null)
+			{
+				return;
+			}
 
-            var visibleBuildings = Find.CurrentMap.listerBuildings.allBuildingsColonist.Count;
-            if (visibleBuildings != lastVisibleBuildings)
-            {
-                lastVisibleBuildings = visibleBuildings;
-                ticksToRescan = 0;
-            }
+			if (current_map != last_current_map)
+			{
+				last_current_map = current_map;
+				last_visible_buildings = -1;
+				ticks_to_rescan = 0;
+			}
 
-            --ticksToRescan;
-            if (ticksToRescan < 0)
-            {
-                ticksToRescan = 2000;
-                TurnItOnUtility.ScanForThings();
-            }
+			var visible_buildings = current_map.listerBuildings.allBuildingsColonist.Count;
+			if (visible_buildings != last_visible_buildings)
+			{
+				last_visible_buildings = visible_buildings;
+				ticks_to_rescan = 0;
+			}
 
-            TurnItOnUtility.EvaluateBeds();
-            TurnItOnUtility.EvaluateResearchTables();
-            TurnItOnUtility.EvaluateAutodoors();
-            TurnItOnUtility.EvaluateDeepDrills();
-            TurnItOnUtility.EvaluateScanners();
-            TurnItOnUtility.EvalHydroponicsBasins();
-            TurnItOnUtility.EvalTurrets();
-            TurnItOnUtility.EvalScheduledBuildings();
+			--ticks_to_rescan;
+			if (ticks_to_rescan < 0)
+			{
+				ticks_to_rescan = RESCAN_INTERVAL;
+				TurnItOnUtility.ScanForThings();
+			}
 
-            // Apply the collected power-level changes
-            foreach (var thing in TurnItOnUtility.buildingsToModifyPowerOn)
-            {
-                if (thing == null)
-                {
-                    TurnItOnUtility.LogMessage("Tried to modify power level for thing which no longer exists");
-                    continue;
-                }
+			if (current_tick >= next_fast_evaluation_tick)
+			{
+				next_fast_evaluation_tick = current_tick + FAST_EVALUATION_INTERVAL;
+				TurnItOnUtility.RefreshFastBuildingUsage();
+			}
 
-                var powerComp = thing.TryGetComp<CompPowerTrader>();
-                if (powerComp != null && TurnItOnUtility.powerLevels.TryGetValue(thing.def.defName, out var level))
-                {
-                    powerComp.PowerOutput = level[0];
-                }
-            }
+			if (current_tick >= next_regular_evaluation_tick)
+			{
+				next_regular_evaluation_tick = current_tick + REGULAR_EVALUATION_INTERVAL;
+				TurnItOnUtility.RefreshRegularBuildingUsage();
+				TurnItOnUtility.RefreshRimfactoryBuildingUsage();
+			}
 
-            foreach (var building in TurnItOnUtility.buildingsThatWereUsedLastTick)
-            {
-                if (!TurnItOnUtility.buildingsToModifyPowerOn.Contains(building))
-                {
-                    continue;
-                }
+			if (current_tick >= next_slow_evaluation_tick)
+			{
+				next_slow_evaluation_tick = current_tick + SLOW_EVALUATION_INTERVAL;
+				TurnItOnUtility.RefreshSlowBuildingUsage();
+			}
 
-                var powerComp = building.TryGetComp<CompPowerTrader>();
-                if (powerComp != null && TurnItOnUtility.powerLevels.TryGetValue(building.def.defName, out var level))
-                {
-                    powerComp.PowerOutput = level[1];
-                }
-            }
-        }
-        catch (Exception e)
-        {
-            Log.Error($"[TurnOnOffRePowered] Exception in GameComponentTick: {e}");
-        }
-    }
+			TurnItOnUtility.MergePolledBuildingUsage();
+			TurnItOnUtility.ApplyPowerStateChanges();
+
+			if (current_tick >= next_power_reconciliation_tick)
+			{
+				next_power_reconciliation_tick = current_tick + POWER_RECONCILIATION_INTERVAL;
+				TurnItOnUtility.ReconcilePowerStates();
+			}
+		}
+		catch (Exception exception)
+		{
+			Log.Error($"[TurnOnOffRePowered] Exception in GameComponentTick: {exception}");
+		}
+	}
 }
