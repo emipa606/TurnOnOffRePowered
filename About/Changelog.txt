@@ -1,5 +1,16 @@
 # Changelog for TurnOnOffRePowered
 
+1.6.5 - Performance update by SIGSEGV111
+Cache CompPowerTrader references and configured idle/active power values.
+Update PowerOutput only when a building changes between active and idle states.
+Periodically reconcile cached power states to remain compatible with other mods that modify power output.
+Evaluate different building categories at appropriate intervals instead of polling every building every tick.
+Reduce expensive RimFactory status checks to a lower polling frequency.
+Clear stale cached references when buildings or maps change.
+Reuse cached power components in power-availability checks.
+Preserve per-tick handling where immediate updates are required, such as Harmony-reported worktable and recreation usage
+
+
 1.6.4 - Fixed hugslib import
 
 

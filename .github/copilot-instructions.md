@@ -1,40 +1,67 @@
-# GitHub Copilot Instructions for RimWorld Modding Project: "Turn It On and Off - RePowered"
+# Copilot Instructions for RimWorld Modding Project: Turn It On and Off - RePowered
 
 ## Mod Overview and Purpose
-"Turn It On and Off - RePowered" is a RimWorld mod that combines the best aspects of two existing mods: "Turn It On and Off" and "RePower." This project aims to enhance the realism of power consumption in RimWorld by allowing electrical devices to turn off when not in use, and by configuring more realistic power requirements through mod options. The mod maintains the functionality of using RePower patches for custom settings and ensures compatibility with RimWorld's vanilla mechanics.
+
+**Turn It On and Off - RePowered** is a RimWorld mod that synergizes the functionalities of two existing mods: "Turn It On and Off" and "RePower." Its primary objective is to offer a more realistic power consumption experience within the game by dynamically adjusting the power requirements of devices based on their operational state. It scales power usage based on building activity and includes customizable multipliers for adjusting vanilla power-draw settings.
 
 ## Key Features and Systems
-- **Power Draw Adjustments**: Configure a multiplier for vanilla power-draw to achieve more realistic levels.
-- **Increased Compatibility**: Supports turrets, autodoors, Doors Expanded, and Project RimFactory Revived.
-- **Workbenches Power Management**: Blocks work on benches when power is insufficient, preserving continuity with those inheriting vanilla class methods.
-- **Language Support**: Includes French and Russian translations.
-- **Dynamic Changes**: Settings can be applied without restarting the game.
-- **Safe Installation/Removal**: Can be added or removed from current saves without impacting performance more than the original mods.
+
+- **Dynamic Power Management**: Buildings such as electric stoves draw realistic power levels when active and conserve energy when dormant.
+  
+- **Turret Power Usage**: Turrets based on the `Building_Turret` class consume higher power during active targeting.
+
+- **Door Automation**: Autodoors using the vanilla door class, and those in "Doors Expanded," are supported for automatic power adjustments.
+
+- **Project RimFactory Integration**: Supports both workbenches and automatic assemblers from "Project RimFactory Revived."
+
+- **Conditional Workblocking**: Allows workbenches inheriting the vanilla class to block usage when insufficient power is available.
+
+- **Localization Support**: Currently includes translations in French and Russian.
+
+- **No Dependencies**: As of version 1.6, reliance on HugsLib has been removed, enhancing compatibility and ease of use.
 
 ## Coding Patterns and Conventions
-- **Static Classes**: Utilize `public static class` for utility and component classes to organize code related to specific game mechanics without relying on object instances.
-- **Inheritance and Extension**: Leverage polymorphism for extending or altering the functionality of vanilla or modded classes, such as `GameComponent`, `ModSettings`, and `Def`.
-- **Method Visibility**: Design methods with public accessibility in utility classes to enable easy integration within other scripts or when patching.
-- **Namespaces and Modules**: Use clear namespaces to segment and manage different aspects of the project, ensuring easy identification of system-specific functionalities.
+
+- **C# Code Structure**: The mod utilizes a structured approach with separate files for different Harmony patches, ensuring clarity and maintainability.
+
+- **Consistent Naming**: Classes and methods follow clear, descriptive naming conventions that reflect their functionality, such as `Building_WorkTable_UsedThisTick`.
 
 ## XML Integration
-- **Configuration and Customization**: XML files should be utilized to customize and define mod options, ensuring they are readable with RimWorld’s Def structure.
-- **Localization**: Manage translations within XML files to support multiple languages, maintaining the mod's multilingual capabilities.
+
+- **Power Settings**: XML files are utilized for storing and applying custom power settings, providing flexibility for users to tweak power draw multipliers.
+
+- **Def Integration**: The mod uses XML definitions, such as `UpdateDef`, for managing version updates and feature changes seamlessly.
 
 ## Harmony Patching
-- **Dynamic Runtime Alterations**: Use Harmony to patch existing methods in the game, allowing you to dynamically alter game behavior without modifying core game code directly.
-- **Targeted Patching**: Focus patches on key methods that govern power management and workload allowance to integrate features such as automatic power adjustments and active/inactive state management of devices.
-- **Collaboration**: Patches can share functionalities with related mods, like RePower, enhancing modularity and cross-compatibility.
+
+- **Prefix and Postfix Methods**: Harmony patches in this mod employ both prefix and postfix methods to adjust behaviour at critical execution points, like modifying power draw after `CompInspectStringExtra`.
+
+- **Targeted Harmony Patches**: Each gameplay element, such as `Building_WorkTable_UsableForBillsAfterFueling`, is patched individually, allowing precise control over specific functionalities.
 
 ## Suggestions for Copilot
-- **Code Completion**: Use Copilot to assist with method generation for handling dynamic configurations in `ModSettings` classes, reducing repetitive coding tasks.
-- **XML Generation**: Implement functionality for generating XML templates for new device or feature support, leveraging Copilot to ensure consistency.
-- **Patch Creation**: Facilitate the creation of Harmony patches by suggesting applicable entry and exit points in the base game code.
-- **Refactoring Assistance**: Use Copilot to help refactor legacy code for better performance and readability by suggesting optimized patterns and design structures.
-- **Documentation**: Utilize Copilot to aid in creating documentation comments within your codebase, improving maintainability and comprehension for collaborators or future review.
 
-Credits:
-- Ryder, Thom Blair III, Fluffy, Xen, EbonJaeger, NubsPixel, Texel for prior work on the "Turn It On and Off" and "RePower" mods.
+- **Automation of Patch Creation**: Utilize Copilot to propose boilerplate code for new Harmony patches, maintaining a consistent format with existing patches.
+
+- **XML Definition Templates**: Generate structured XML templates for adding new building types or updating power draw settings.
+
+- **Method Refactoring**: Suggest refactoring opportunities to streamline repetitive code patterns found in power adjustment logic.
+
+- **Localization Support How-Tos**: Provide guidance for adding new translations or integrating community-driven language packs.
+
+By following these instructions, Copilot will be better equipped to assist developers in extending and maintaining the "Turn It On and Off - RePowered" mod, ensuring it remains scalable and user-friendly.
+
+This `.github/copilot-instructions.md` file provides a comprehensive blueprint for developers leveraging GitHub Copilot, emphasizing clear understanding of the mod's functionalities, coding practices, and integration techniques.
+
+## Project Solution Guidelines
+- Relevant mod XML files are included as Solution Items under the solution folder named XML, these can be read and modified from within the solution.
+- Use these in-solution XML files as the primary files for reference and modification.
+- The `.github/copilot-instructions.md` file is included in the solution under the `.github` solution folder, so it should be read/modified from within the solution instead of using paths outside the solution. Update this file once only, as it and the parent-path solution reference point to the same file in this workspace.
+- When making functional changes in this mod, ensure the documented features stay in sync with implementation; use the in-solution `.github` copy as the primary file.
+- In the solution is also a project called Assembly-CSharp, containing a read-only version of the decompiled game source, for reference and debugging purposes.
+- For any new documentation, update this copilot-instructions.md file rather than creating separate documentation files.
 
 
-This `.github/copilot-instructions.md` document offers developers comprehensive guidance on leveraging GitHub Copilot in a RimWorld mod project while maintaining the key features and systems refined through prior development efforts.
+## Hard rules (must follow)
+- Do NOT run commands that modify the repo (no git commit, git apply, dotnet format) unless explicitly asked.
+- Prefer minimal reads: read only the smallest code region needed (around the suspicious lines).
+
