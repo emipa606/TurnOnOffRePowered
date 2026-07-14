@@ -14,6 +14,29 @@ namespace TurnOnOffRePowered;
 // Utility class: moved most static fields / methods from original ModBase here.
 public static class TurnItOnUtility
 {
+	private readonly struct TrackedPowerBuilding
+	{
+		public readonly float active_power;
+		public readonly float idle_power;
+		public readonly CompPowerTrader power_comp;
+
+		public TrackedPowerBuilding(CompPowerTrader power_comp, float idle_power, float active_power)
+		{
+			this.power_comp = power_comp;
+			this.idle_power = idle_power;
+			this.active_power = active_power;
+		}
+	}
+
+	private static readonly List<Building> building_state_scratch = [];
+	private static readonly HashSet<Building> buildings_powered_as_active = [];
+	private static HashSet<Building> evaluation_target;
+	private static readonly HashSet<Building> fast_polled_buildings_in_use = [];
+	private static readonly HashSet<Building> regular_polled_buildings_in_use = [];
+	private static readonly HashSet<Building> rimfactory_buildings_in_use = [];
+	private static readonly HashSet<Building> slow_polled_buildings_in_use = [];
+	private static readonly Dictionary<Building, TrackedPowerBuilding> tracked_power_buildings = [];
+
     private static readonly HashSet<ThingDef> AutodoorDefs = [];
     private static readonly HashSet<Building> Autodoors = [];
     private static readonly HashSet<ThingDef> buildingDefsReservable = [];
@@ -328,8 +351,185 @@ public static class TurnItOnUtility
     // Public helper that was originally on ModBase
     public static void AddBuildingUsed(Building building)
     {
-        buildingsInUseThisTick.Add(building);
+		if (building != null)
+		{
+			buildingsInUseThisTick.Add(building);
+		}
     }
+
+	public static void BeginUsageTick()
+	{
+		buildingsThatWereUsedLastTick.Clear();
+		buildingsThatWereUsedLastTick.UnionWith(buildingsInUseThisTick);
+		buildingsInUseThisTick.Clear();
+	}
+
+	public static void RefreshFastBuildingUsage()
+	{
+		fast_polled_buildings_in_use.Clear();
+		evaluation_target = fast_polled_buildings_in_use;
+		try
+		{
+			EvaluateAutodoors();
+			EvalTurrets();
+		}
+		finally
+		{
+			evaluation_target = null;
+		}
+	}
+
+	public static void RefreshRegularBuildingUsage()
+	{
+		regular_polled_buildings_in_use.Clear();
+		evaluation_target = regular_polled_buildings_in_use;
+		try
+		{
+			EvaluateBeds();
+			EvaluateResearchTables();
+			EvaluateDeepDrills();
+			EvaluateScanners();
+		}
+		finally
+		{
+			evaluation_target = null;
+		}
+	}
+
+	public static void RefreshSlowBuildingUsage()
+	{
+		slow_polled_buildings_in_use.Clear();
+		evaluation_target = slow_polled_buildings_in_use;
+		try
+		{
+			EvalHydroponicsBasins();
+			EvalScheduledBuildings();
+		}
+		finally
+		{
+			evaluation_target = null;
+		}
+	}
+
+	public static void RefreshRimfactoryBuildingUsage()
+	{
+		rimfactory_buildings_in_use.Clear();
+		evaluation_target = rimfactory_buildings_in_use;
+		try
+		{
+			EvaluateRimfactoryWork();
+		}
+		finally
+		{
+			evaluation_target = null;
+		}
+	}
+
+	public static void MergePolledBuildingUsage()
+	{
+		buildingsThatWereUsedLastTick.UnionWith(fast_polled_buildings_in_use);
+		buildingsThatWereUsedLastTick.UnionWith(regular_polled_buildings_in_use);
+		buildingsThatWereUsedLastTick.UnionWith(slow_polled_buildings_in_use);
+		buildingsThatWereUsedLastTick.UnionWith(rimfactory_buildings_in_use);
+	}
+
+	public static void ApplyPowerStateChanges()
+	{
+		building_state_scratch.Clear();
+		foreach (var building in buildings_powered_as_active)
+		{
+			if (building == null || building.Map == null ||
+				!isBuildingExpectedActive(building) ||
+				!tracked_power_buildings.ContainsKey(building))
+			{
+				building_state_scratch.Add(building);
+			}
+		}
+
+		foreach (var building in building_state_scratch)
+		{
+			if (building != null && building.Map != null &&
+				tracked_power_buildings.TryGetValue(building, out var tracked_building))
+			{
+				tracked_building.power_comp.PowerOutput = tracked_building.idle_power;
+			}
+
+			buildings_powered_as_active.Remove(building);
+		}
+
+		foreach (var building in buildingsThatWereUsedLastTick)
+		{
+			if (building == null || building.Map == null || buildings_powered_as_active.Contains(building))
+			{
+				continue;
+			}
+
+			if (!tracked_power_buildings.TryGetValue(building, out var tracked_building))
+			{
+				continue;
+			}
+
+			tracked_building.power_comp.PowerOutput = tracked_building.active_power;
+			buildings_powered_as_active.Add(building);
+		}
+	}
+
+	public static void ReconcilePowerStates()
+	{
+		building_state_scratch.Clear();
+		foreach (var entry in tracked_power_buildings)
+		{
+			var building = entry.Key;
+			if (building == null || building.Map == null)
+			{
+				building_state_scratch.Add(building);
+				continue;
+			}
+
+			var tracked_building = entry.Value;
+			var is_active = isBuildingExpectedActive(building);
+			tracked_building.power_comp.PowerOutput = is_active
+				? tracked_building.active_power
+				: tracked_building.idle_power;
+			if (is_active)
+			{
+				buildings_powered_as_active.Add(building);
+			}
+			else
+			{
+				buildings_powered_as_active.Remove(building);
+			}
+		}
+
+		foreach (var building in building_state_scratch)
+		{
+			tracked_power_buildings.Remove(building);
+			buildings_powered_as_active.Remove(building);
+		}
+	}
+
+	private static void addEvaluatedBuilding(Building building)
+	{
+		if (building != null)
+		{
+			(evaluation_target ?? buildingsInUseThisTick).Add(building);
+		}
+	}
+
+	private static bool isBuildingExpectedActive(Building building)
+	{
+		return buildingsThatWereUsedLastTick.Contains(building) ||
+			fast_polled_buildings_in_use.Contains(building) ||
+			regular_polled_buildings_in_use.Contains(building) ||
+			slow_polled_buildings_in_use.Contains(building) ||
+			rimfactory_buildings_in_use.Contains(building);
+	}
+
+	private static bool isBuildingMarkedUsed(Building building)
+	{
+		return buildingsInUseThisTick.Contains(building) ||
+			buildingsThatWereUsedLastTick.Contains(building);
+	}
 
     // Clear variables (keeps parity with original)
     public static void ClearVariables()
@@ -338,6 +538,14 @@ public static class TurnItOnUtility
         buildingsToModifyPowerOn.Clear();
         buildingsThatWereUsedLastTick.Clear();
         buildingsInUseThisTick.Clear();
+		buildings_powered_as_active.Clear();
+		building_state_scratch.Clear();
+		evaluation_target = null;
+		fast_polled_buildings_in_use.Clear();
+		regular_polled_buildings_in_use.Clear();
+		rimfactory_buildings_in_use.Clear();
+		slow_polled_buildings_in_use.Clear();
+		tracked_power_buildings.Clear();
         buildingDefsReservable.Clear();
         reservableBuildings.Clear();
         ScheduledBuildingsDefs.Clear();
@@ -397,7 +605,7 @@ public static class TurnItOnUtility
                         continue;
                     }
 
-                    buildingsInUseThisTick.Add(basin);
+                    addEvaluatedBuilding(basin);
                     break;
                 }
             }
@@ -422,7 +630,7 @@ public static class TurnItOnUtility
 
             if (comp.Allowed)
             {
-                buildingsInUseThisTick.Add(building);
+                addEvaluatedBuilding(building);
             }
         }
     }
@@ -441,7 +649,7 @@ public static class TurnItOnUtility
                 continue;
             }
 
-            buildingsInUseThisTick.Add(turret);
+            addEvaluatedBuilding(turret);
         }
     }
 
@@ -468,7 +676,7 @@ public static class TurnItOnUtility
                     !buildingDoor.BlockedOpenMomentary &&
                     (!buildingDoor.HoldOpen && canTryCloseAutomatically || buildingDoor.TicksTillFullyOpened > 0))
                 {
-                    buildingsInUseThisTick.Add(autodoor);
+                    addEvaluatedBuilding(autodoor);
                 }
 
                 continue;
@@ -512,7 +720,7 @@ public static class TurnItOnUtility
             if (openState && !blockedOpenMomentaryState &&
                 !(holdOpenRemotelyState && ticksTillFullyOpenedState == 0))
             {
-                buildingsInUseThisTick.Add(autodoor);
+                addEvaluatedBuilding(autodoor);
             }
         }
     }
@@ -540,7 +748,7 @@ public static class TurnItOnUtility
             var facilityAffector = medicalBed.GetComp<CompAffectedByFacilities>();
             foreach (var facility in facilityAffector.LinkedFacilitiesListForReading)
             {
-                buildingsInUseThisTick.Add(facility as Building);
+                addEvaluatedBuilding(facility as Building);
             }
         }
     }
@@ -560,7 +768,7 @@ public static class TurnItOnUtility
                 continue;
             }
 
-            buildingsInUseThisTick.Add(deepDrill);
+            addEvaluatedBuilding(deepDrill);
         }
     }
 
@@ -579,12 +787,12 @@ public static class TurnItOnUtility
                 continue;
             }
 
-            buildingsInUseThisTick.Add(researchTable);
+            addEvaluatedBuilding(researchTable);
 
             var facilityAffector = researchTable.GetComp<CompAffectedByFacilities>();
             foreach (var facility in facilityAffector.LinkedFacilitiesListForReading)
             {
-                buildingsInUseThisTick.Add(facility as Building);
+                addEvaluatedBuilding(facility as Building);
             }
         }
     }
@@ -603,8 +811,9 @@ public static class TurnItOnUtility
                 continue;
             }
 
-            if (buildingsInUseThisTick.Contains(rimfactoryBuilding))
+            if (isBuildingMarkedUsed(rimfactoryBuilding))
             {
+				addEvaluatedBuilding(rimfactoryBuilding);
                 continue;
             }
 
@@ -616,7 +825,7 @@ public static class TurnItOnUtility
                     continue;
                 }
 
-                buildingsInUseThisTick.Add(rimfactoryBuilding);
+                addEvaluatedBuilding(rimfactoryBuilding);
                 break;
             }
         }
@@ -628,8 +837,9 @@ public static class TurnItOnUtility
                 continue;
             }
 
-            if (buildingsInUseThisTick.Contains(building))
+            if (isBuildingMarkedUsed(building))
             {
+				addEvaluatedBuilding(building);
                 continue;
             }
 
@@ -646,7 +856,7 @@ public static class TurnItOnUtility
 
             if (interactionSpotBuilding.GetInspectString().Contains("%)]"))
             {
-                buildingsInUseThisTick.Add(building);
+                addEvaluatedBuilding(building);
             }
         }
     }
@@ -666,7 +876,7 @@ public static class TurnItOnUtility
                 continue;
             }
 
-            buildingsInUseThisTick.Add(scanner);
+            addEvaluatedBuilding(scanner);
         }
     }
 
@@ -684,7 +894,7 @@ public static class TurnItOnUtility
             return true;
         }
 
-        if (!powerLevels.ContainsKey(table.def.defName))
+        if (!powerLevels.TryGetValue(table.def.defName, out var power_levels))
         {
             return true;
         }
@@ -699,15 +909,17 @@ public static class TurnItOnUtility
             return true;
         }
 
-        var powerTrader = table.GetComp<CompPowerTrader>();
-        if (powerTrader?.PowerNet == null)
+		var power_trader = tracked_power_buildings.TryGetValue(table, out var tracked_building)
+			? tracked_building.power_comp
+			: table.GetComp<CompPowerTrader>();
+        if (power_trader?.PowerNet == null)
         {
             return true;
         }
 
-        var currentPowerNeed = powerLevels[table.def.defName][1] * -1;
-        var currentGainRate = powerTrader.PowerNet.CurrentEnergyGainRate() / CompPower.WattsToWattDaysPerTick;
-        var currentSavedEnergy = powerTrader.PowerNet.CurrentStoredEnergy() / CompPower.WattsToWattDaysPerTick;
+        var currentPowerNeed = power_levels[1] * -1;
+        var currentGainRate = power_trader.PowerNet.CurrentEnergyGainRate() / CompPower.WattsToWattDaysPerTick;
+        var currentSavedEnergy = power_trader.PowerNet.CurrentStoredEnergy() / CompPower.WattsToWattDaysPerTick;
 
         if (currentGainRate >= currentPowerNeed)
         {
@@ -771,9 +983,12 @@ public static class TurnItOnUtility
         Scanners.Clear();
         HydroponcsBasins.Clear();
         Turrets.Clear();
+		RimfactoryBuildings.Clear();
 
         if (Current.ProgramState != ProgramState.Playing)
         {
+			tracked_power_buildings.Clear();
+			buildings_powered_as_active.Clear();
             return;
         }
 
@@ -839,5 +1054,61 @@ public static class TurnItOnUtility
             var hydroponicsBasins = map.listerBuildings.AllBuildingsColonistOfDef(HydroponicsBasinDef);
             HydroponcsBasins.UnionWith(hydroponicsBasins);
         }
+
+		rebuildPowerBuildingCache();
     }
+
+	private static void rebuildPowerBuildingCache()
+	{
+		building_state_scratch.Clear();
+		foreach (var entry in tracked_power_buildings)
+		{
+			var building = entry.Key;
+			if (building == null || building.Map == null || !buildingsToModifyPowerOn.Contains(building))
+			{
+				if (building != null && building.Map != null)
+				{
+					entry.Value.power_comp.PowerOutput = entry.Value.idle_power;
+				}
+
+				building_state_scratch.Add(building);
+			}
+		}
+
+		foreach (var building in building_state_scratch)
+		{
+			tracked_power_buildings.Remove(building);
+			buildings_powered_as_active.Remove(building);
+		}
+
+		foreach (var building in buildingsToModifyPowerOn)
+		{
+			if (building?.Map == null ||
+				!powerLevels.TryGetValue(building.def.defName, out var levels))
+			{
+				continue;
+			}
+
+			var power_comp = building.TryGetComp<CompPowerTrader>();
+			if (power_comp == null)
+			{
+				continue;
+			}
+
+			var tracked_building = new TrackedPowerBuilding(power_comp, levels[0], levels[1]);
+			tracked_power_buildings[building] = tracked_building;
+			var is_active = isBuildingExpectedActive(building);
+			power_comp.PowerOutput = is_active
+				? tracked_building.active_power
+				: tracked_building.idle_power;
+			if (is_active)
+			{
+				buildings_powered_as_active.Add(building);
+			}
+			else
+			{
+				buildings_powered_as_active.Remove(building);
+			}
+		}
+	}
 }
