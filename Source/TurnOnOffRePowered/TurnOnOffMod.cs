@@ -12,6 +12,9 @@ public class TurnOnOffMod : Mod
 {
     private static string currentVersion;
 
+    // Overrides
+    public static string CurrentVersion => currentVersion;
+
     public TurnOnOffMod(ModContentPack content) : base(content)
     {
         Instance = this;
@@ -100,40 +103,8 @@ public class TurnOnOffMod : Mod
 
     public override void DoSettingsWindowContents(Rect inRect)
     {
-        var ls = new Listing_Standard();
-        ls.Begin(inRect);
-        ls.Gap();
-
-        ls.Label("lowValue.label".Translate() + ": " + Settings.lowValue.ToString("F0"));
-        Settings.lowValue = ls.Slider(Settings.lowValue, 1f, 100f);
-
-        ls.Label("highMultiplier.label".Translate() + ": " + Settings.highMultiplier.ToString("F2"));
-        Settings.highMultiplier = ls.Slider(Settings.highMultiplier, 0.1f, 10f);
-
-        ls.Label("doorMultiplier.label".Translate() + ": " + Settings.doorMultiplier.ToString("F2"));
-        Settings.doorMultiplier = ls.Slider(Settings.doorMultiplier, 0.1f, 10f);
-
-        ls.CheckboxLabeled("applyRepowerVanilla.label".Translate(), ref Settings.applyRepowerVanilla);
-        ls.CheckboxLabeled("blockUseWhenLowPower.label".Translate(), ref Settings.blockUseWhenLowPower);
-        ls.CheckboxLabeled("verboseLogging.label".Translate(), ref Settings.verboseLogging);
-
-        ls.Gap();
-        if (ls.ButtonText("Reset to defaults"))
-        {
-            Settings.SetToDefaults();
-            TurnItOnUtility.ClearVariables();
-            TurnItOnUtility.DefsLoaded();
-        }
-
-        if (currentVersion != null)
-        {
-            ls.Gap();
-            GUI.contentColor = Color.gray;
-            ls.Label("currentModVersion.label".Translate(currentVersion));
-            GUI.contentColor = Color.white;
-        }
-
-        ls.End();
+        // Overrides: Delegate UI rendering to the dedicated GUI class
+        TurnOnOffSettingsGUI.Draw(inRect, Settings);
     }
 
     public override string SettingsCategory()
@@ -145,6 +116,9 @@ public class TurnOnOffMod : Mod
     public override void WriteSettings()
     {
         base.WriteSettings();
+
+        // Overrides: Save any pending overrides from the Devices tab before closing
+        TurnOnOffSettingsGUI.SavePendingChanges(Settings);
 
         // Rebuild internal data using the updated settings
         TurnItOnUtility.ClearVariables();
