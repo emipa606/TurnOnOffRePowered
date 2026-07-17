@@ -150,7 +150,7 @@ public static class TurnItOnUtility
         LogMessage("Clearing power-levels");
         powerLevels = new Dictionary<string, Vector2>();
 
-        updateRepowerDefs();
+        UpdateRepowerDefs();
         UpdateTurnItOnAndOffDefs();
 
         var settings = TurnOnOffMod.Instance?.Settings;
@@ -276,7 +276,7 @@ public static class TurnItOnUtility
         ScanForThings();
     }
 
-    private static void updateRepowerDefs()
+    private static void UpdateRepowerDefs()
     {
         var defs = DefDatabase<RePowerDef>.AllDefs;
         foreach (var def in defs)
@@ -885,6 +885,12 @@ public static class TurnItOnUtility
             return true;
         }
 
+        // Overrides: Apply override if present
+        if (TryGetOverridedPowerLevels(table.def.defName, out var overridden))
+        {
+            power_levels = overridden;
+        }
+
         if (table.CanWorkWithoutPower)
         {
             return true;
@@ -1044,7 +1050,7 @@ public static class TurnItOnUtility
         rebuildPowerBuildingCache();
     }
 
-    private static void rebuildPowerBuildingCache()
+    public static void rebuildPowerBuildingCache()
     {
         building_state_scratch.Clear();
         foreach (var entry in tracked_power_buildings)
@@ -1077,6 +1083,12 @@ public static class TurnItOnUtility
                 continue;
             }
 
+            // Overrides: Apply override if present
+            if (TryGetOverridedPowerLevels(building.def.defName, out var overridden))
+            {
+                levels = overridden;
+            }
+
             var power_comp = building.TryGetComp<CompPowerTrader>();
             if (power_comp == null)
             {
@@ -1105,5 +1117,19 @@ public static class TurnItOnUtility
         public readonly float active_power = activePower;
         public readonly float idle_power = idlePower;
         public readonly CompPowerTrader power_comp = powerComp;
+    }
+
+    // Overrides: Helper to resolve user-defined power overrides.
+    // Returns true if an override exists and outputs it, otherwise returns false.
+    public static bool TryGetOverridedPowerLevels(string defName, out Vector2 levels)
+    {
+        var settings = TurnOnOffMod.Instance?.Settings;
+        if (settings?.customPowerValues != null &&
+            settings.customPowerValues.TryGetValue(defName, out levels))
+        {
+            return true;
+        }
+        levels = Vector2.zero;
+        return false;
     }
 }
