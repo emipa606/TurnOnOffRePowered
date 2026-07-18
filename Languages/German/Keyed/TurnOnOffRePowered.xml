@@ -19,4 +19,13 @@
   <unitOfPower>W</unitOfPower>
   <notEnoughPower.failreason>Es ist nicht genug Strom verfügbar (benötigt {0}{1})</notEnoughPower.failreason>
   <currentModVersion.label>Installierte Mod-Version: {0}</currentModVersion.label>
+  <search.tooltip>Suche nach defname, label und modname</search.tooltip>
+  <tabs.general.label>Allgemein</tabs.general.label>
+  <tabs.devices.label>Geräte</tabs.devices.label>
+  <devicename.label>Gerät</devicename.label>
+  <deviceidle.label>Leerlauf (W)</deviceidle.label>
+  <deviceactive.label>Aktiv (W)</deviceactive.label>
+  <resetdefaults.label>Auf Standardwerte zurücksetzen</resetdefaults.label>
+  <nodevicesdata.label>Es sind keine Gerätedaten verfügbar. Der Mod wurde möglicherweise noch nicht initialisiert.</nodevicesdata.label>
+  <reset.label>Zurücksetzen</reset.label>
 </LanguageData>

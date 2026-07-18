@@ -1,6 +1,8 @@
-﻿using System.Collections.Generic; // Overrides
-using UnityEngine; // Overrides
+﻿using System.Collections.Generic;
+using UnityEngine;
 using Verse;
+// Overrides
+// Overrides
 
 namespace TurnOnOffRePowered;
 
@@ -9,15 +11,15 @@ public class TurnOnOffSettings : ModSettings
 {
     public bool applyRepowerVanilla = true;
     public bool blockUseWhenLowPower = true;
-    public float doorMultiplier = 10f;
-    public float highMultiplier = 2.5f;
-    public float lowValue = 10f;
-    public bool verboseLogging;
 
     // Overrides: Stores user-defined overrides for specific buildings.
     // The UI reads base values from TurnItOnUtility.powerLevels and writes overrides here.
     // This dictionary has the highest priority when calculating effective power levels.
-    public Dictionary<string, Vector2> customPowerValues = new Dictionary<string, Vector2>();
+    public Dictionary<string, Vector2> customPowerValues = new();
+    public float doorMultiplier = 10f;
+    public float highMultiplier = 2.5f;
+    public float lowValue = 10f;
+    public bool verboseLogging;
 
     public override void ExposeData()
     {
@@ -30,8 +32,7 @@ public class TurnOnOffSettings : ModSettings
 
         // Overrides: Serialize the custom override dictionary.
         Scribe_Collections.Look(ref customPowerValues, "customPowerValues", LookMode.Value, LookMode.Value);
-        if (customPowerValues == null)
-            customPowerValues = new Dictionary<string, Vector2>();
+        customPowerValues ??= new Dictionary<string, Vector2>();
 
         base.ExposeData();
     }

@@ -1,27 +1,29 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LanguageData>
-	<lowValue.label>Powerdraw when unused in Watts</lowValue.label>
-	<lowValue.tooltip>How many Watts should be consumed when the building is idle?</lowValue.tooltip>
-	<highMultiplier.label>Power multiplier when in use</highMultiplier.label>
-	<highMultiplier.tooltip>How much should the original powerdraw be multiplied with?</highMultiplier.tooltip>
-	<doorMultiplier.label>Power multiplier for autodoors</doorMultiplier.label>
-	<doorMultiplier.tooltip>How much should the original powerdraw be multiplied with when in use (opening/closing)?</doorMultiplier.tooltip>
-	<verboseLogging.label>Verbose logging</verboseLogging.label>
-	<verboseLogging.tooltip>Will show all powerlevels in the log at startup</verboseLogging.tooltip>
-	<blockUseWhenLowPower.label>Block use on low power</blockUseWhenLowPower.label>
-	<blockUseWhenLowPower.tooltip>Will block the use of workbenches if the power generation is too low to support it and there is not enough saved electricity.</blockUseWhenLowPower.tooltip>
-	<applyRepowerVanilla.label>Apply built-in power-settings from the original RePower-mod</applyRepowerVanilla.label>
-	<applyRepowerVanilla.tooltip>The RePower-mod had default values for the Crematorium, Smelter and the High-Tech Research Bench, increasing the high and low value for these buildings independent of the above settings.</applyRepowerVanilla.tooltip>
-	<powerNeededActive>active</powerNeededActive>
-	<powerNeededInactive>inactive</powerNeededInactive>
-	<unitOfPower>W</unitOfPower>
-	<notEnoughPower.failreason>There is not enough power available (needs {0}{1})</notEnoughPower.failreason>
-	<currentModVersion.label>Installed mod-version: {0}</currentModVersion.label>
-	<TabGeneral>General</TabGeneral>
-	<TabDevices>Devices</TabDevices>
-	<DeviceName>Device</DeviceName>
-	<DeviceIdle>Idle (W)</DeviceIdle>
-	<DeviceActive>Active (W)</DeviceActive>
-	<NoDevicesData>No device data available. Mod may not be initialized yet.</NoDevicesData>
-	<Override>Override</Override>
+  <lowValue.label>Powerdraw when unused in Watts</lowValue.label>
+  <lowValue.tooltip>How many Watts should be consumed when the building is idle?</lowValue.tooltip>
+  <highMultiplier.label>Power multiplier when in use</highMultiplier.label>
+  <highMultiplier.tooltip>How much should the original powerdraw be multiplied with?</highMultiplier.tooltip>
+  <doorMultiplier.label>Power multiplier for autodoors</doorMultiplier.label>
+  <doorMultiplier.tooltip>How much should the original powerdraw be multiplied with when in use (opening/closing)?</doorMultiplier.tooltip>
+  <verboseLogging.label>Verbose logging</verboseLogging.label>
+  <verboseLogging.tooltip>Will show all powerlevels in the log at startup</verboseLogging.tooltip>
+  <blockUseWhenLowPower.label>Block use on low power</blockUseWhenLowPower.label>
+  <blockUseWhenLowPower.tooltip>Will block the use of workbenches if the power generation is too low to support it and there is not enough saved electricity.</blockUseWhenLowPower.tooltip>
+  <applyRepowerVanilla.label>Apply built-in power-settings from the original RePower-mod</applyRepowerVanilla.label>
+  <applyRepowerVanilla.tooltip>The RePower-mod had default values for the Crematorium, Smelter and the High-Tech Research Bench, increasing the high and low value for these buildings independent of the above settings.</applyRepowerVanilla.tooltip>
+  <powerNeededActive>active</powerNeededActive>
+  <powerNeededInactive>inactive</powerNeededInactive>
+  <unitOfPower>W</unitOfPower>
+  <notEnoughPower.failreason>There is not enough power available (needs {0}{1})</notEnoughPower.failreason>
+  <currentModVersion.label>Installed mod-version: {0}</currentModVersion.label>
+  <search.tooltip>Search on defname, label and modname</search.tooltip>
+  <tabs.general.label>General</tabs.general.label>
+  <tabs.devices.label>Devices</tabs.devices.label>
+  <devicename.label>Device</devicename.label>
+  <deviceidle.label>Idle (W)</deviceidle.label>
+  <deviceactive.label>Active (W)</deviceactive.label>
+  <resetdefaults.label>Reset to defaults</resetdefaults.label>
+  <nodevicesdata.label>No device data available. Mod may not be initialized yet.</nodevicesdata.label>
+  <reset.label>Reset</reset.label>
 </LanguageData>

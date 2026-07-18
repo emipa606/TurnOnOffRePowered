@@ -19,4 +19,13 @@
   <unitOfPower>W</unitOfPower>
   <notEnoughPower.failreason>没有足够的电力可用（需要{0}{1}）。</notEnoughPower.failreason>
   <currentModVersion.label>已安装 MOD 版本：{0}</currentModVersion.label>
+  <search.tooltip>按 defname、label 和 modname 搜索</search.tooltip>
+  <tabs.general.label>一般内容</tabs.general.label>
+  <tabs.devices.label>设备</tabs.devices.label>
+  <devicename.label>设备</devicename.label>
+  <deviceidle.label>空闲 (W)</deviceidle.label>
+  <deviceactive.label>激活 (W)</deviceactive.label>
+  <resetdefaults.label>重置为默认值</resetdefaults.label>
+  <nodevicesdata.label>没有可用设备数据。模组可能尚未初始化。</nodevicesdata.label>
+  <reset.label>重置</reset.label>
 </LanguageData>

@@ -10,15 +10,10 @@ namespace TurnOnOffRePowered;
 
 public class TurnOnOffMod : Mod
 {
-    private static string currentVersion;
-
-    // Overrides
-    public static string CurrentVersion => currentVersion;
-
     public TurnOnOffMod(ModContentPack content) : base(content)
     {
         Instance = this;
-        currentVersion = VersionFromManifest.GetVersionFromModMetaData(content.ModMetaData);
+        CurrentVersion = VersionFromManifest.GetVersionFromModMetaData(content.ModMetaData);
 
         Settings = GetSettings<TurnOnOffSettings>();
 
@@ -38,6 +33,9 @@ public class TurnOnOffMod : Mod
             false,
             null);
     }
+
+    // Overrides
+    public static string CurrentVersion { get; private set; }
 
     public static TurnOnOffMod Instance { get; private set; }
 
@@ -115,10 +113,9 @@ public class TurnOnOffMod : Mod
 
     public override void WriteSettings()
     {
-        base.WriteSettings();
-
-        // Overrides: Save any pending overrides from the Devices tab before closing
         TurnOnOffSettingsGUI.SavePendingChanges(Settings);
+
+        base.WriteSettings();
 
         // Rebuild internal data using the updated settings
         TurnItOnUtility.ClearVariables();

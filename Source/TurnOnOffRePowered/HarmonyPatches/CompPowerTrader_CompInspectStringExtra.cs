@@ -13,14 +13,20 @@ public static class CompPowerTrader_CompInspectStringExtra
     {
         var parent = __instance.parent;
         if (!TurnItOnUtility.buildingsToModifyPowerOn.Contains(parent)
-            || !TurnItOnUtility.powerLevels.ContainsKey(parent.def.defName))
+            || !TurnItOnUtility.powerLevels.TryGetValue(parent.def.defName, out var powerLevels))
         {
             return;
         }
 
+        // Overrides: Apply override if present
+        if (TurnItOnUtility.TryGetOverridedPowerLevels(parent.def.defName, out var overrideValue))
+        {
+            powerLevels = overrideValue;
+        }
+
         var newString = TurnItOnUtility.buildingsThatWereUsedLastTick.Contains(parent)
-            ? $"{"PowerNeeded".Translate()}: {TurnItOnUtility.powerLevels[parent.def.defName][1] * -1} {"unitOfPower".Translate()} ({TurnItOnUtility.powerLevels[parent.def.defName][0] * -1} {"unitOfPower".Translate()} {"powerNeededInactive".Translate()})\n"
-            : $"{"PowerNeeded".Translate()}: {TurnItOnUtility.powerLevels[parent.def.defName][0] * -1} {"unitOfPower".Translate()} ({TurnItOnUtility.powerLevels[parent.def.defName][1] * -1} {"unitOfPower".Translate()} {"powerNeededActive".Translate()})\n";
+            ? $"{"PowerNeeded".Translate()}: {powerLevels[1] * -1} {"unitOfPower".Translate()} ({powerLevels[0] * -1} {"unitOfPower".Translate()} {"powerNeededInactive".Translate()})\n"
+            : $"{"PowerNeeded".Translate()}: {powerLevels[0] * -1} {"unitOfPower".Translate()} ({powerLevels[1] * -1} {"unitOfPower".Translate()} {"powerNeededActive".Translate()})\n";
         var pattern = $"{"PowerNeeded".Translate()}.*\\n";
         __result = Regex.Replace(__result, pattern, newString);
     }

@@ -19,4 +19,13 @@
   <unitOfPower>W</unitOfPower>
   <notEnoughPower.failreason>Il n'y a pas assez de puissance disponible (besoins {0}) {1}</notEnoughPower.failreason>
   <currentModVersion.label>Version installée du mod : {0}</currentModVersion.label>
+  <search.tooltip>Recherche par defname, label et modname</search.tooltip>
+  <tabs.general.label>Général</tabs.general.label>
+  <tabs.devices.label>Appareils</tabs.devices.label>
+  <devicename.label>Appareil</devicename.label>
+  <deviceidle.label>Inactif (F)</deviceidle.label>
+  <deviceactive.label>Actif (W)</deviceactive.label>
+  <resetdefaults.label>Réinitialisation aux valeurs par défaut</resetdefaults.label>
+  <nodevicesdata.label>Aucune donnée de l'appareil n'est disponible. Le mod n'est peut-être pas encore initialisé.</nodevicesdata.label>
+  <reset.label>Remise à zéro</reset.label>
 </LanguageData>

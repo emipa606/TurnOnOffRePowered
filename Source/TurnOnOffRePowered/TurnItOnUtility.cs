@@ -880,15 +880,15 @@ public static class TurnItOnUtility
             return true;
         }
 
-        if (!powerLevels.TryGetValue(table.def.defName, out var power_levels))
+        if (!powerLevels.TryGetValue(table.def.defName, out var powerLevel))
         {
             return true;
         }
 
         // Overrides: Apply override if present
-        if (TryGetOverridedPowerLevels(table.def.defName, out var overridden))
+        if (TryGetOverridedPowerLevels(table.def.defName, out var overrideValue))
         {
-            power_levels = overridden;
+            powerLevel = overrideValue;
         }
 
         if (table.CanWorkWithoutPower)
@@ -909,7 +909,7 @@ public static class TurnItOnUtility
             return true;
         }
 
-        var currentPowerNeed = power_levels[1] * -1;
+        var currentPowerNeed = powerLevel[1] * -1;
         var currentGainRate = power_trader.PowerNet.CurrentEnergyGainRate() / CompPower.WattsToWattDaysPerTick;
         var currentSavedEnergy = power_trader.PowerNet.CurrentStoredEnergy() / CompPower.WattsToWattDaysPerTick;
 
@@ -1112,13 +1112,6 @@ public static class TurnItOnUtility
         }
     }
 
-    private readonly struct TrackedPowerBuilding(CompPowerTrader powerComp, float idlePower, float activePower)
-    {
-        public readonly float active_power = activePower;
-        public readonly float idle_power = idlePower;
-        public readonly CompPowerTrader power_comp = powerComp;
-    }
-
     // Overrides: Helper to resolve user-defined power overrides.
     // Returns true if an override exists and outputs it, otherwise returns false.
     public static bool TryGetOverridedPowerLevels(string defName, out Vector2 levels)
@@ -1129,7 +1122,15 @@ public static class TurnItOnUtility
         {
             return true;
         }
+
         levels = Vector2.zero;
         return false;
+    }
+
+    private readonly struct TrackedPowerBuilding(CompPowerTrader powerComp, float idlePower, float activePower)
+    {
+        public readonly float active_power = activePower;
+        public readonly float idle_power = idlePower;
+        public readonly CompPowerTrader power_comp = powerComp;
     }
 }
