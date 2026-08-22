@@ -64,6 +64,11 @@ public class TurnOnOffGameComponent : GameComponent
                 ticks_to_rescan = 0;
             }
 
+            if (TurnItOnUtility.ConsumeRescanRequest())
+            {
+                ticks_to_rescan = 0;
+            }
+
             --ticks_to_rescan;
             if (ticks_to_rescan < 0)
             {

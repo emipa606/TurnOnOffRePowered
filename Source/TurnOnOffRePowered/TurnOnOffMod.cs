@@ -93,7 +93,7 @@ public class TurnOnOffMod : Mod
         }
 
         Instance.Settings.Write();
-        xml.Root.Element(modNodeName)?.Remove();
+        xml.Root?.Element(modNodeName)?.Remove();
         xml.Save(hugsLibConfig);
 
         Log.Message($"[{modNodeName}]: Imported old HugLib-settings");

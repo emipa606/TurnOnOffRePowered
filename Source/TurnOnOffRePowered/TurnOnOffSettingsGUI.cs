@@ -82,20 +82,25 @@ public static class TurnOnOffSettingsGUI
     private static void BuildDeviceRows(TurnOnOffSettings settings)
     {
         deviceRows.Clear();
-        var powerLevels = TurnItOnUtility.powerLevels;
+        var powerLevels = TurnItOnUtility.PowerLevels;
         if (powerLevels == null)
         {
             return;
         }
 
-        foreach (var kv in powerLevels)
+        foreach (var keyValuePair in powerLevels)
         {
-            var defName = kv.Key;
-            var basePower = kv.Value; // Base calculated value
+            var defName = keyValuePair.Key;
+            var basePower = keyValuePair.Value; // Base calculated value
 
             var isOverridden = settings.customPowerValues != null && settings.customPowerValues.ContainsKey(defName);
 
             var def = DefDatabase<ThingDef>.GetNamedSilentFail(defName);
+            if (settings.customPowerValues == null)
+            {
+                continue;
+            }
+
             var row = new DeviceRow
             {
                 def = def,
@@ -114,12 +119,10 @@ public static class TurnOnOffSettingsGUI
     private static void SaveDeviceOverrides(TurnOnOffSettings settings)
     {
         var newOverrides = new Dictionary<string, Vector2>();
-        foreach (var row in deviceRows)
+        foreach (var row in deviceRows.Where(row =>
+                     !row.baseValues.y.Equals(-row.active) || !row.baseValues.x.Equals(-row.idle)))
         {
-            if (row.baseValues.y != -row.active || row.baseValues.x != -row.idle)
-            {
-                newOverrides[row.defName] = new Vector2(-row.idle, -row.active);
-            }
+            newOverrides[row.defName] = new Vector2(-row.idle, -row.active);
         }
 
         settings.customPowerValues = newOverrides;
@@ -153,8 +156,8 @@ public static class TurnOnOffSettingsGUI
         ls.CheckboxLabeled("blockUseWhenLowPower.label".Translate(), ref settings.blockUseWhenLowPower);
         ls.CheckboxLabeled("verboseLogging.label".Translate(), ref settings.verboseLogging);
 
-        if (oldLow != settings.lowValue || oldHigh != settings.highMultiplier ||
-            oldDoor != settings.doorMultiplier || oldRepower != settings.applyRepowerVanilla ||
+        if (!oldLow.Equals(settings.lowValue) || !oldHigh.Equals(settings.highMultiplier) ||
+            !oldDoor.Equals(settings.doorMultiplier) || oldRepower != settings.applyRepowerVanilla ||
             oldBlock != settings.blockUseWhenLowPower || oldVerbose != settings.verboseLogging)
         {
             settingsChanged = true;
@@ -282,16 +285,15 @@ public static class TurnOnOffSettingsGUI
 
                 var resetRect = new Rect(new Vector2(x + 4f, curY + ((rowHeight - 24f) / 2f)), new Vector2(24f, 24f));
                 var baseValues = row.baseValues;
-                var hasChanges = baseValues.y != -row.active || baseValues.x != -row.idle;
-                if (hasChanges && Widgets.ButtonImage(resetRect, TexUI.RotLeftTex, tooltip: "reset.label".Translate()))
+                var hasChanges = !baseValues.y.Equals(-row.active) || !baseValues.x.Equals(-row.idle);
+                if (hasChanges &&
+                    Widgets.ButtonImage(resetRect, TexUI.RotLeftTex, tooltip: "reset.label".Translate()) &&
+                    TurnItOnUtility.PowerLevels.TryGetValue(row.defName, out var basePower))
                 {
-                    if (TurnItOnUtility.powerLevels.TryGetValue(row.defName, out var basePower))
-                    {
-                        row.idle = -basePower.x;
-                        row.active = -basePower.y;
-                        row.bufferIdle = row.idle.ToString("F0");
-                        row.bufferActive = row.active.ToString("F0");
-                    }
+                    row.idle = -basePower.x;
+                    row.active = -basePower.y;
+                    row.bufferIdle = row.idle.ToString("F0");
+                    row.bufferActive = row.active.ToString("F0");
                 }
 
                 curY += rowHeight;
@@ -310,7 +312,7 @@ public static class TurnOnOffSettingsGUI
         Devices
     }
 
-    private class DeviceRow
+    private sealed class DeviceRow
     {
         public float active;
         public string bufferActive;
@@ -328,7 +330,7 @@ public static class TurnOnOffSettingsGUI
                     return field;
                 }
 
-                field = TurnItOnUtility.powerLevels.TryGetValue(defName, out var basePower)
+                field = TurnItOnUtility.PowerLevels.TryGetValue(defName, out var basePower)
                     ? new Vector2(basePower.x, basePower.y)
                     : Vector2.zero;
 

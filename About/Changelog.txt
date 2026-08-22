@@ -1,5 +1,8 @@
 # Changelog for TurnOnOffRePowered
 
+1.6.7 - Added support for Garage Doors from [url=https://steamcommunity.com/workshop/filedetails/?id=3014906877]Vanilla Vehicles Expanded[/url]
+
+
 1.6.6 - Added mod-options to modify separate values, based on pr by An-on-im
 Used DeepL to update translations for ChineseSimplified, French, German, Russian
 
