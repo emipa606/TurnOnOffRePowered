@@ -1,5 +1,8 @@
 # Changelog for TurnOnOffRePowered
 
+1.6.8 - Safer map-fetching due to vanilla code limitations
+
+
 1.6.7 - Added support for Garage Doors from [url=https://steamcommunity.com/workshop/filedetails/?id=3014906877]Vanilla Vehicles Expanded[/url]
 
 

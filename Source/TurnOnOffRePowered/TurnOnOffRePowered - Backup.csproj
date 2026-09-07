@@ -6,7 +6,7 @@
     <AppendRuntimeIdentifierToOutputPath>false</AppendRuntimeIdentifierToOutputPath>
     <DebugType>None</DebugType>
     <LangVersion>latest</LangVersion>
-    <FileVersion>1.6.7</FileVersion>
+    <FileVersion>1.6.8</FileVersion>
     <AssemblyVersion>1.6</AssemblyVersion>
     <Product>Turn It On and Off - RePowered</Product>
     <Copyright>© Mlie 2026 - MIT License</Copyright>

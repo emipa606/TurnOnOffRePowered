@@ -68,6 +68,25 @@ public static class TurnItOnUtility
     // Power levels pairs as Vector2's, X = Idling, Y = In Use
     public static Dictionary<string, Vector2> PowerLevels { get; private set; } = new();
 
+    private static bool TryGetMapSafe(Thing thing, out Map map)
+    {
+        map = null;
+        if (thing == null)
+        {
+            return false;
+        }
+
+        try
+        {
+            map = thing.Map;
+            return map != null;
+        }
+        catch (ArgumentOutOfRangeException)
+        {
+            return false;
+        }
+    }
+
     private static bool isDoorType(ThingDef def)
     {
         if (typeof(Building_Door).IsAssignableFrom(def.thingClass))
@@ -438,7 +457,7 @@ public static class TurnItOnUtility
         building_state_scratch.Clear();
         foreach (var building in buildings_powered_as_active)
         {
-            if (building?.Map == null ||
+            if (!TryGetMapSafe(building, out _) ||
                 !isBuildingExpectedActive(building) ||
                 !tracked_power_buildings.ContainsKey(building))
             {
@@ -448,7 +467,7 @@ public static class TurnItOnUtility
 
         foreach (var building in building_state_scratch)
         {
-            if (building?.Map != null &&
+            if (TryGetMapSafe(building, out _) &&
                 tracked_power_buildings.TryGetValue(building, out var tracked_building))
             {
                 tracked_building.power_comp.PowerOutput = tracked_building.idle_power;
@@ -459,7 +478,7 @@ public static class TurnItOnUtility
 
         foreach (var building in buildingsThatWereUsedLastTick)
         {
-            if (building?.Map == null || buildings_powered_as_active.Contains(building))
+            if (!TryGetMapSafe(building, out _) || buildings_powered_as_active.Contains(building))
             {
                 continue;
             }
@@ -480,7 +499,7 @@ public static class TurnItOnUtility
         foreach (var entry in tracked_power_buildings)
         {
             var building = entry.Key;
-            if (building?.Map == null)
+            if (!TryGetMapSafe(building, out _))
             {
                 building_state_scratch.Add(building);
                 continue;
@@ -591,14 +610,14 @@ public static class TurnItOnUtility
 
         foreach (var basin in HydroponcsBasins)
         {
-            if (basin?.Map == null)
+            if (!TryGetMapSafe(basin, out var basinMap))
             {
                 continue;
             }
 
             foreach (var tile in basin.OccupiedRect())
             {
-                var thingsOnTile = basin.Map.thingGrid.ThingsListAt(tile);
+                var thingsOnTile = basinMap.thingGrid.ThingsListAt(tile);
                 foreach (var thing in thingsOnTile)
                 {
                     if (thing is not Plant)
@@ -618,7 +637,7 @@ public static class TurnItOnUtility
     {
         foreach (var building in scheduledBuildings)
         {
-            if (building?.Map == null)
+            if (!TryGetMapSafe(building, out _))
             {
                 continue;
             }
@@ -640,7 +659,7 @@ public static class TurnItOnUtility
     {
         foreach (var turret in Turrets)
         {
-            if (turret?.Map == null)
+            if (!TryGetMapSafe(turret, out _))
             {
                 continue;
             }
@@ -659,7 +678,7 @@ public static class TurnItOnUtility
     {
         foreach (var autodoor in Autodoors)
         {
-            if (autodoor?.Map == null)
+            if (!TryGetMapSafe(autodoor, out _))
             {
                 rescanRequested = true;
                 continue;
@@ -743,7 +762,7 @@ public static class TurnItOnUtility
     {
         foreach (var medicalBed in MedicalBeds)
         {
-            if (medicalBed?.Map == null)
+            if (!TryGetMapSafe(medicalBed, out _))
             {
                 continue;
             }
@@ -771,12 +790,12 @@ public static class TurnItOnUtility
     {
         foreach (var deepDrill in DeepDrills)
         {
-            if (deepDrill?.Map == null)
+            if (!TryGetMapSafe(deepDrill, out var deepDrillMap))
             {
                 continue;
             }
 
-            var inUse = deepDrill.Map.reservationManager.IsReservedByAnyoneOf(deepDrill, deepDrill.Faction);
+            var inUse = deepDrillMap.reservationManager.IsReservedByAnyoneOf(deepDrill, deepDrill.Faction);
             if (!inUse)
             {
                 continue;
@@ -790,12 +809,12 @@ public static class TurnItOnUtility
     {
         foreach (var researchTable in HiTechResearchBenches)
         {
-            if (researchTable?.Map == null)
+            if (!TryGetMapSafe(researchTable, out var researchTableMap))
             {
                 continue;
             }
 
-            var inUse = researchTable.Map.reservationManager.IsReservedByAnyoneOf(researchTable, researchTable.Faction);
+            var inUse = researchTableMap.reservationManager.IsReservedByAnyoneOf(researchTable, researchTable.Faction);
             if (!inUse)
             {
                 continue;
@@ -820,7 +839,7 @@ public static class TurnItOnUtility
 
         foreach (var rimfactoryBuilding in RimfactoryBuildings)
         {
-            if (rimfactoryBuilding?.Map == null)
+            if (!TryGetMapSafe(rimfactoryBuilding, out _))
             {
                 continue;
             }
@@ -846,7 +865,7 @@ public static class TurnItOnUtility
 
         foreach (var building in buildingsToModifyPowerOn)
         {
-            if (building?.Map == null)
+            if (!TryGetMapSafe(building, out var map))
             {
                 continue;
             }
@@ -857,7 +876,7 @@ public static class TurnItOnUtility
                 continue;
             }
 
-            var interactionSpotBuilding = building.InteractionCell.GetFirstBuilding(building.Map);
+            var interactionSpotBuilding = building.InteractionCell.GetFirstBuilding(map);
             if (interactionSpotBuilding?.def.thingClass.FullName == null)
             {
                 continue;
@@ -879,12 +898,12 @@ public static class TurnItOnUtility
     {
         foreach (var scanner in Scanners)
         {
-            if (scanner?.Map == null)
+            if (!TryGetMapSafe(scanner, out var scannerMap))
             {
                 continue;
             }
 
-            var inUse = scanner.Map.reservationManager.IsReservedByAnyoneOf(scanner, scanner.Faction);
+            var inUse = scannerMap.reservationManager.IsReservedByAnyoneOf(scanner, scanner.Faction);
             if (!inUse)
             {
                 continue;
@@ -1084,12 +1103,12 @@ public static class TurnItOnUtility
         foreach (var entry in tracked_power_buildings)
         {
             var building = entry.Key;
-            if (building?.Map != null && buildingsToModifyPowerOn.Contains(building))
+            if (TryGetMapSafe(building, out _) && buildingsToModifyPowerOn.Contains(building))
             {
                 continue;
             }
 
-            if (building?.Map != null)
+            if (TryGetMapSafe(building, out _))
             {
                 entry.Value.power_comp.PowerOutput = entry.Value.idle_power;
             }
@@ -1105,7 +1124,7 @@ public static class TurnItOnUtility
 
         foreach (var building in buildingsToModifyPowerOn)
         {
-            if (building?.Map == null ||
+            if (!TryGetMapSafe(building, out _) ||
                 !PowerLevels.TryGetValue(building.def.defName, out var levels))
             {
                 continue;
