@@ -12,10 +12,10 @@
   <Folder Name="/XML/About/">
     <File Path="../About/about.xml" />
   </Folder>
-  <Folder Name="/XML/1.6/Defs/">
-    <File Path="../1.6/Defs/UpdateInfo.xml" />
-  </Folder>
   <Folder Name="/XML/Languages/English/Keyed/">
     <File Path="../Languages/English/Keyed/TurnOnOffRePowered.xml" />
+  </Folder>
+  <Folder Name="/XML/1.7/Defs/">
+    <File Path="../1.7/Defs/UpdateInfo.xml" />
   </Folder>
 </Solution>

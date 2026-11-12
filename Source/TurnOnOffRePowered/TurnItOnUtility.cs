@@ -692,7 +692,8 @@ public static class TurnItOnUtility
                     continue;
                 }
 
-                var canTryCloseAutomatically = (bool)canTryCloseAutomaticallyMethod.Invoke(buildingDoor, null);
+                var canTryCloseAutomatically =
+                    (bool)(canTryCloseAutomaticallyMethod.Invoke(buildingDoor, null) ?? false);
                 if (buildingDoor.Open &&
                     !buildingDoor.BlockedOpenMomentary &&
                     (!buildingDoor.HoldOpen && canTryCloseAutomatically || buildingDoor.TicksTillFullyOpened > 0))
@@ -705,8 +706,9 @@ public static class TurnItOnUtility
 
             if (autodoor.def.thingClass.FullName == "VanillaVehiclesExpanded.GarageAutoDoor")
             {
-                var openProgress = (float)autodoor.def.thingClass.InvokeMember("OpenProgress",
-                    BindingFlags.Public | BindingFlags.Instance | BindingFlags.InvokeMethod, null, autodoor, null);
+                var openProgress = (float)(autodoor.def.thingClass.InvokeMember("OpenProgress",
+                    BindingFlags.Public | BindingFlags.Instance | BindingFlags.InvokeMethod, null, autodoor,
+                    null) ?? 0);
                 if (openProgress is > 0f and < 1f)
                 {
                     addEvaluatedBuilding(autodoor);
@@ -720,35 +722,35 @@ public static class TurnItOnUtility
                 continue;
             }
 
-            var openState = (bool)autodoor.def.thingClass
+            var openState = (bool)(autodoor.def.thingClass
                 .InvokeMember(
                     "Open",
                     BindingFlags.GetProperty | BindingFlags.Public | BindingFlags.Instance,
                     null,
                     autodoor,
-                    null);
+                    null) ?? false);
 
-            var blockedOpenMomentaryState = (bool)autodoor.def.thingClass
+            var blockedOpenMomentaryState = (bool)(autodoor.def.thingClass
                 .InvokeMember(
                     "BlockedOpenMomentary",
                     BindingFlags.GetProperty | BindingFlags.Public | BindingFlags.Instance,
                     null,
                     autodoor,
-                    null);
-            var holdOpenRemotelyState = (bool)autodoor.def.thingClass
+                    null) ?? false);
+            var holdOpenRemotelyState = (bool)(autodoor.def.thingClass
                 .InvokeMember(
                     "HoldOpenRemotely",
                     BindingFlags.GetProperty | BindingFlags.Public | BindingFlags.Instance,
                     null,
                     autodoor,
-                    null);
-            var ticksTillFullyOpenedState = (int)autodoor.def.thingClass
+                    null) ?? false);
+            var ticksTillFullyOpenedState = (int)(autodoor.def.thingClass
                 .InvokeMember(
                     "TicksTillFullyOpened",
                     BindingFlags.GetProperty | BindingFlags.Public | BindingFlags.Instance,
                     null,
                     autodoor,
-                    null);
+                    null) ?? 0);
 
             if (openState && !blockedOpenMomentaryState &&
                 !(holdOpenRemotelyState && ticksTillFullyOpenedState == 0))

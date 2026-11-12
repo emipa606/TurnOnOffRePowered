@@ -1,56 +1,89 @@
-# Copilot Instructions for RimWorld Modding Project: Turn It On and Off - RePowered
+# GitHub Copilot Instructions for Turn It On and Off - RePowered
 
 ## Mod Overview and Purpose
 
-**Turn It On and Off - RePowered** is a RimWorld mod that synergizes the functionalities of two existing mods: "Turn It On and Off" and "RePower." Its primary objective is to offer a more realistic power consumption experience within the game by dynamically adjusting the power requirements of devices based on their operational state. It scales power usage based on building activity and includes customizable multipliers for adjusting vanilla power-draw settings.
+**Turn It On and Off - RePowered** (TurnOnOffRePowered) is a RimWorld mod that combines the functionality of the **Turn It On and Off** and **RePower** mods to enhance the realism of power consumption in the game. The mod introduces mod options that allow players to define a multiplier for the vanilla power draw, providing a more realistic power management experience. It supports a wide range of buildings and systems, including turrets, autodoors, and specialized workbenches from popular RimWorld mods like **Doors Expanded** and **Project RimFactory Revived**.
 
 ## Key Features and Systems
 
-- **Dynamic Power Management**: Buildings such as electric stoves draw realistic power levels when active and conserve energy when dormant.
-  
-- **Turret Power Usage**: Turrets based on the `Building_Turret` class consume higher power during active targeting.
-
-- **Door Automation**: Autodoors using the vanilla door class, and those in "Doors Expanded," are supported for automatic power adjustments.
-
-- **Project RimFactory Integration**: Supports both workbenches and automatic assemblers from "Project RimFactory Revived."
-
-- **Conditional Workblocking**: Allows workbenches inheriting the vanilla class to block usage when insufficient power is available.
-
-- **Localization Support**: Currently includes translations in French and Russian.
-
-- **No Dependencies**: As of version 1.6, reliance on HugsLib has been removed, enhancing compatibility and ease of use.
+- **Realistic Power Consumption**: Adjusts vanilla power draw using multipliers to simulate real-world power usage.
+- **Mod Options**: Provides settings to enable/disable features, set power multipliers, and block work if power is low.
+- **Wide Compatibility**: Supports numerous building types from vanilla RimWorld and popular mods.
+- **Dynamic Power Management**: Continuously evaluates building states and power usage, updating power states in real-time.
+- **Translation Support**: Includes French and Russian translations for a wider audience.
 
 ## Coding Patterns and Conventions
 
-- **C# Code Structure**: The mod utilizes a structured approach with separate files for different Harmony patches, ensuring clarity and maintainability.
+### Directory Structure
+- **Source/**: Contains the main C# source files.
+- **Defs/**: Contains XML definition files.
 
-- **Consistent Naming**: Classes and methods follow clear, descriptive naming conventions that reflect their functionality, such as `Building_WorkTable_UsedThisTick`.
+### C# Source Files
+- **TurnItOnUtility.cs**: Contains utility functions and classes for managing power usage and building states.
+- **TurnOnOffMod.cs**: Manages mod settings and configuration.
+- **TurnOnOffGameComponent.cs**: Handles game component ticks and updates.
+- **RePowerDef.cs** and **TurnItOnandOffDef.cs**: Define custom mod-specific definitions.
 
-## XML Integration
+### Coding Style
+- Use PascalCase for class names and methods.
+- Use camelCase for method parameters and local variables.
+- Use `//` for single-line comments and `/* */` for multi-line comments.
+- Use `using` directives for necessary namespaces at the top of each file.
+- Follow RimWorld's naming conventions for consistency.
 
-- **Power Settings**: XML files are utilized for storing and applying custom power settings, providing flexibility for users to tweak power draw multipliers.
+### XML Integration
+- **Defs/**: Contains XML files that define mod-specific data and configurations.
+- **UpdateInfo.xml**: Provides update information and changelog entries.
 
-- **Def Integration**: The mod uses XML definitions, such as `UpdateDef`, for managing version updates and feature changes seamlessly.
-
-## Harmony Patching
-
-- **Prefix and Postfix Methods**: Harmony patches in this mod employ both prefix and postfix methods to adjust behaviour at critical execution points, like modifying power draw after `CompInspectStringExtra`.
-
-- **Targeted Harmony Patches**: Each gameplay element, such as `Building_WorkTable_UsableForBillsAfterFueling`, is patched individually, allowing precise control over specific functionalities.
+### Harmony Patching
+- Harmony is used to patch vanilla RimWorld methods to integrate custom power management logic.
+- Patches are defined in the `Defs/` folder using XML files.
+- Use `HarmonyMethod` attributes to specify patch methods.
 
 ## Suggestions for Copilot
 
-- **Automation of Patch Creation**: Utilize Copilot to propose boilerplate code for new Harmony patches, maintaining a consistent format with existing patches.
+1. **Start with a clear understanding of the mod's purpose and features**. This will help Copilot generate more relevant and accurate suggestions.
+2. **Use specific code examples** when requesting help. Providing a snippet of code or a function signature can lead to more targeted assistance.
+3. **Focus on specific areas** of the mod, such as power management, building support, or mod options, to get more targeted help.
+4. **Ask for explanations** of complex code or logic. Copilot can provide insights and clarify how certain parts of the code work.
+5. **Review and test suggestions** thoroughly before integrating them into your mod. Ensure they align with your coding standards and mod's functionality.
 
-- **XML Definition Templates**: Generate structured XML templates for adding new building types or updating power draw settings.
+## Example Usage
 
-- **Method Refactoring**: Suggest refactoring opportunities to streamline repetitive code patterns found in power adjustment logic.
+### Requesting a Harmony Patch
 
-- **Localization Support How-Tos**: Provide guidance for adding new translations or integrating community-driven language packs.
+If you need help creating a Harmony patch to add support for a new building type, you might request something like:
 
-By following these instructions, Copilot will be better equipped to assist developers in extending and maintaining the "Turn It On and Off - RePowered" mod, ensuring it remains scalable and user-friendly.
+// Create a Harmony patch for a new building type called "CustomBuilding"
+[HarmonyPatch(typeof(Building), "SomeMethod")]
+public static class CustomBuildingPatch
+{
+    [HarmonyPrefix]
+    public static bool Prefix(Building __instance)
+    {
+        // Custom logic here
+        return true;
+    }
+}
 
-This `.github/copilot-instructions.md` file provides a comprehensive blueprint for developers leveraging GitHub Copilot, emphasizing clear understanding of the mod's functionalities, coding practices, and integration techniques.
+
+### Requesting a Utility Function
+
+If you need a utility function to check if a building is expected to be active, you might request:
+
+// Utility function to check if a building is expected to be active
+public static bool IsBuildingExpectedActive(Building building)
+{
+    // Implementation logic here
+    return true;
+}
+
+
+## Conclusion
+
+By following these guidelines, you can effectively leverage GitHub Copilot to enhance your modding experience. Whether you need help with Harmony patching, XML integration, or coding patterns, Copilot can provide valuable assistance to streamline your development process.
+
+Happy modding!
 
 ## Project Solution Guidelines
 - Relevant mod XML files are included as Solution Items under the solution folder named XML, these can be read and modified from within the solution.
@@ -64,4 +97,6 @@ This `.github/copilot-instructions.md` file provides a comprehensive blueprint f
 ## Hard rules (must follow)
 - Do NOT run commands that modify the repo (no git commit, git apply, dotnet format) unless explicitly asked.
 - Prefer minimal reads: read only the smallest code region needed (around the suspicious lines).
+- When mentioning SonarQube issues, automatically use the SonarQube MCP service to fetch and address issues instead of making inferred fixes without querying SonarQube first.
+- When mentioning the rimworld log, automatically use the Rimworld MCP service to fetch the log.
 
